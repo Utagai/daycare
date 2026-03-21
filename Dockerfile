@@ -22,4 +22,4 @@ RUN mkdir -p /root/projects && \
 WORKDIR /build/e2e
 COPY go.mod go.sum ./
 COPY e2e/ ./
-CMD ["go", "test", "-v", "."]
+CMD ["go", "test", "-tags=e2e", "-v", "."]
