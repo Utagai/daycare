@@ -56,7 +56,8 @@ daycare wcd [project-name] [worktree-name]
 ### Commands
 
 #### `plist`
-Lists all projects found under the common directory.
+Lists all projects found under the common directory. Output is displayed as a
+table with columns for name, path, and time since last commit.
 
 **Examples:**
 ```
@@ -64,7 +65,9 @@ daycare plist
 ```
 
 #### `wlist`
-Lists worktrees for a project. If no project name is provided, opens an interactive fuzzy-search picker to select the project.
+Lists worktrees for a project. Output is displayed as a table with columns for
+name, branch, and path. If no project name is provided, opens an interactive
+fuzzy-search picker to select the project.
 
 **Arguments:**
 | Argument | Description | Required |
@@ -78,7 +81,9 @@ daycare wlist my-project       # List worktrees for a specific project
 ```
 
 #### `pcreate`
-Creates a new project. Prompts for the project name if not provided.
+Creates a new project. Creates the project directory, initializes a Git repository,
+creates a `.daycare` script file, and adds it to `.git/info/exclude` for local ignore.
+Prompts for the project name if not provided.
 
 **Arguments:**
 | Argument | Description | Required |
@@ -92,7 +97,10 @@ daycare pcreate my-new-project
 ```
 
 #### `wcreate`
-Creates a new worktree within an existing project. The worktree name is also used as the branch name. If no project name is provided, opens an interactive fuzzy-search picker to select the project.
+Creates a new worktree within an existing project. The worktree is created at
+`worktrees/<project-name>/<name>` and uses `<name>` as both the worktree directory
+and branch name. If no project name is provided, opens an interactive fuzzy-search
+picker to select the project. Errors if a worktree with the given name already exists.
 
 **Arguments:**
 | Argument | Description | Required |
@@ -107,7 +115,9 @@ daycare wcreate my-project feature/new-feature
 ```
 
 #### `wremove`
-Removes a worktree from a project. If no project name is provided, opens an interactive fuzzy-search picker to select the project. Prompts for confirmation before removal.
+Removes a worktree from a project. If no project name is provided, opens an
+interactive fuzzy-search picker to select the project. Prompts for confirmation
+before removal. The main worktree cannot be removed.
 
 **Arguments:**
 | Argument | Description | Required |
@@ -123,7 +133,9 @@ daycare wremove my-project feature-branch
 ```
 
 #### `pcd`
-Prints the path to a project. If no project name is provided, opens an interactive fuzzy-search picker to select the project. Intended to be used with command substitution: `cd $(daycare pcd <args>)`.
+Outputs an eval-able script that executes the project's `.daycare` hook (if present)
+and changes to the project directory. If no project name is provided, opens an
+interactive fuzzy-search picker to select the project.
 
 **Arguments:**
 | Argument | Description | Required |
@@ -132,12 +144,14 @@ Prints the path to a project. If no project name is provided, opens an interacti
 
 **Examples:**
 ```
-cd $(daycare pcd)                           # Opens picker to select project
-cd $(daycare pcd my-project)
+eval "$(daycare pcd)"                       # Opens picker to select project
+eval "$(daycare pcd my-project)"
 ```
 
 #### `wcd`
-Prints the path to a worktree. If no project name is provided, opens an interactive fuzzy-search picker to select the project. Intended to be used with command substitution: `cd $(daycare wcd <args>)`.
+Outputs an eval-able script that executes the project's `.daycare` hook (if present)
+and changes to the worktree directory. If no project name is provided, opens an
+interactive fuzzy-search picker to select the project.
 
 **Arguments:**
 | Argument | Description | Required |
@@ -147,19 +161,19 @@ Prints the path to a worktree. If no project name is provided, opens an interact
 
 **Examples:**
 ```
-cd $(daycare wcd)                           # Opens pickers for project then worktree
-cd $(daycare wcd my-project)                # Opens picker for worktree
-cd $(daycare wcd my-project feature-branch)
+eval "$(daycare wcd)"                       # Opens pickers for project then worktree
+eval "$(daycare wcd my-project)"            # Opens picker for worktree
+eval "$(daycare wcd my-project feature-branch)"
 ```
 
 ## Configuration
 A file can be placed at ~/.config/daycare/config.yaml to configure the common
 directory where projects are stored, and any other future settings.
 
-Projects can contain a hidden shell script named `.daycare` that `daycare` will
-execute when the user `cd`s into that project or worktree. This allows users to
-set up project-specific environments, such as activating a virtual environment
-or setting environment variables.
+Projects can contain a hidden shell script named `.daycare`. When the user runs
+`daycare pcd` or `daycare wcd`, the output script includes execution of this hook,
+allowing users to set up project-specific environments, such as activating a
+virtual environment or setting environment variables.
 
 ## Shell Integration
 Daycare uses Cobra's built-in shell completion support to provide completions
@@ -176,8 +190,7 @@ daycare completion fish > ~/.config/fish/completions/daycare.fish
 ```
 
 Daycare also ships with a setup script that configures your shell (currently zsh)
-to wrap the `pcd` and `wcd` commands so they actually change the shell's
-working directory.
+to handle the `pcd` and `wcd` commands by evaluating their output.
 
 **Setup:**
 ```
@@ -188,7 +201,7 @@ This appends a wrapper function to `~/.zshrc`:
 ```zsh
 daycare() {
   if [[ "$1" == "pcd" || "$1" == "wcd" ]]; then
-    cd "$(command daycare "$@")"
+    eval "$(command daycare "$@")"
   else
     command daycare "$@"
   fi
