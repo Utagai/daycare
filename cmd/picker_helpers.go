@@ -1,6 +1,10 @@
 package cmd
 
 import (
+	"os"
+	"path/filepath"
+	"strings"
+
 	"github.com/utagai/daycare/internal/config"
 	"github.com/utagai/daycare/internal/models"
 	"github.com/utagai/daycare/internal/picker"
@@ -9,6 +13,7 @@ import (
 )
 
 // selectProject displays a picker for project selection and returns the selected project.
+// It pre-selects the project containing the current working directory, if any.
 func selectProject(cfg *config.Config) (*models.Project, error) {
 	projects, err := project.ListProjects(cfg)
 	if err != nil {
@@ -23,7 +28,19 @@ func selectProject(cfg *config.Config) (*models.Project, error) {
 		}
 	}
 
-	selected, err := picker.Run(items, "Select a project")
+	selectedIdx := -1
+	if cwd, err := os.Getwd(); err == nil {
+		if inferred, err := project.FindProjectByPath(cfg, cwd); err == nil && inferred != nil {
+			for i, p := range projects {
+				if p.Name == inferred.Name {
+					selectedIdx = i
+					break
+				}
+			}
+		}
+	}
+
+	selected, err := picker.Run(items, "Select a project", selectedIdx)
 	if err != nil {
 		return nil, err
 	}
@@ -34,6 +51,7 @@ func selectProject(cfg *config.Config) (*models.Project, error) {
 
 // selectWorktree displays a picker for worktree selection and returns the selected worktree.
 // If excludeMain is true, the main worktree will be excluded from the list.
+// It pre-selects the worktree containing the current working directory, if any.
 func selectWorktree(cfg *config.Config, p *models.Project, excludeMain bool) (*models.Worktree, error) {
 	worktrees, err := worktree.ListWorktrees(cfg, p)
 	if err != nil {
@@ -55,7 +73,17 @@ func selectWorktree(cfg *config.Config, p *models.Project, excludeMain bool) (*m
 		filteredWorktrees = append(filteredWorktrees, wt)
 	}
 
-	selected, err := picker.Run(items, "Select a worktree")
+	selectedIdx := -1
+	if cwd, err := os.Getwd(); err == nil {
+		for i, wt := range filteredWorktrees {
+			if wt.Path == cwd || strings.HasPrefix(cwd, wt.Path+string(filepath.Separator)) {
+				selectedIdx = i
+				break
+			}
+		}
+	}
+
+	selected, err := picker.Run(items, "Select a worktree", selectedIdx)
 	if err != nil {
 		return nil, err
 	}

@@ -34,6 +34,7 @@ type Model struct {
 	height       int
 	title        string
 	windowHeight int
+	selectedIdx  int
 }
 
 // styles for the picker
@@ -58,20 +59,27 @@ var (
 )
 
 // New creates a new picker model with the given items and title.
-func New(items []Item, title string) Model {
+// If selectedIdx >= 0 and < len(items), that item will be pre-selected.
+func New(items []Item, title string, selectedIdx int) Model {
 	ti := textinput.New()
 	ti.Placeholder = "Type to filter..."
 	ti.Focus()
 	ti.CharLimit = 100
 	ti.Width = 40
 
+	cursor := 0
+	if selectedIdx >= 0 && selectedIdx < len(items) {
+		cursor = selectedIdx
+	}
+
 	return Model{
 		items:        items,
 		filtered:     items,
-		cursor:       0,
+		cursor:       cursor,
 		textInput:    ti,
 		title:        title,
-		windowHeight: 10, // default visible items
+		windowHeight: 10,
+		selectedIdx:  selectedIdx,
 	}
 }
 
@@ -241,12 +249,13 @@ func (m Model) Cancelled() bool {
 
 // Run runs the picker and returns the selected item.
 // Returns ErrCancelled if the user cancels the selection.
-func Run(items []Item, title string) (Item, error) {
+// If selectedIdx >= 0, that item will be pre-selected in the list.
+func Run(items []Item, title string, selectedIdx int) (Item, error) {
 	if len(items) == 0 {
 		return nil, errors.New("no items to select from")
 	}
 
-	p := tea.NewProgram(New(items, title))
+	p := tea.NewProgram(New(items, title, selectedIdx))
 	model, err := p.Run()
 	if err != nil {
 		return nil, fmt.Errorf("picker error: %w", err)
