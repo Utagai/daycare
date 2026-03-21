@@ -53,6 +53,8 @@ daycare wremove [project-name] [worktree-name]  # Prompts for confirmation
 daycare pcd [project-name]
 # Change directory into a worktree (opens picker(s) if args omitted).
 daycare wcd [project-name] [worktree-name]
+# Setup shell integration (currently zsh only).
+daycare setup
 ```
 
 ### Global Options
