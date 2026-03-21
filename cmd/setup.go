@@ -30,13 +30,13 @@ daycare() {
   case "$prev" in
     pcd|wcd)
       local output
-      output=$(command daycare "$@")
+      output=$(command daycare "$prev" "$@")
       if [ -n "$output" ]; then
         eval "$output"
       fi
       ;;
     *)
-      command daycare "$@"
+      command daycare "$prev" "$@"
       ;;
   esac
 }
