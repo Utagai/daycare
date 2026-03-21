@@ -52,7 +52,11 @@ If project name is not provided, it will be prompted.`,
 			return fmt.Errorf("failed to run wcreate script: %w", err)
 		}
 
-		cmd.Printf("Created worktree %q for project %q at %s\n", wt.Name, p.Name, wt.Path)
+		cmd.Printf("%s %s %s %s\n",
+			SuccessStyle.Render("Created worktree"),
+			ProjectNameStyle.Render(fmt.Sprintf("%q", wt.Name)),
+			MutedStyle.Render("for project"),
+			ProjectNameStyle.Render(fmt.Sprintf("%q", p.Name)))
 		return nil
 	},
 }

@@ -66,7 +66,11 @@ it will be prompted. The main worktree cannot be removed.`,
 			return fmt.Errorf("cannot remove the main worktree of project %q", p.Name)
 		}
 
-		cmd.Printf("Remove worktree %q at %s? (y/N): ", target.Name, target.Path)
+		cmd.Printf("%s %s at %s? %s ",
+			WarningStyle.Render("Remove worktree"),
+			ProjectNameStyle.Render(fmt.Sprintf("%q", target.Name)),
+			PathStyle.Render(target.Path),
+			MutedStyle.Render("(y/N):"))
 
 		reader := bufio.NewReader(os.Stdin)
 		response, err := reader.ReadString('\n')
@@ -84,7 +88,11 @@ it will be prompted. The main worktree cannot be removed.`,
 			return err
 		}
 
-		cmd.Printf("Removed worktree %q from project %q.\n", worktreeName, p.Name)
+		cmd.Printf("%s %s %s %s\n",
+			SuccessStyle.Render("Removed worktree"),
+			ProjectNameStyle.Render(fmt.Sprintf("%q", worktreeName)),
+			MutedStyle.Render("from project"),
+			ProjectNameStyle.Render(fmt.Sprintf("%q", p.Name)))
 		return nil
 	},
 }

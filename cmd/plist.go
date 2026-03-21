@@ -12,10 +12,10 @@ import (
 )
 
 var (
-	headerColor = lipgloss.Color("121")
-	borderColor = lipgloss.Color("77")
-	evenRowFg   = lipgloss.Color("245")
-	oddRowFg    = lipgloss.Color("250")
+	headerColor = HeaderColor
+	borderColor = BorderColor
+	evenRowFg   = EvenRowFg
+	oddRowFg    = OddRowFg
 )
 
 func tableStyles(row, col int) lipgloss.Style {

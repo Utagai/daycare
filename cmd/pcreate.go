@@ -47,7 +47,10 @@ If project name is not provided, it will be prompted.`,
 			return err
 		}
 
-		cmd.Printf("Created project %q at %s\n", p.Name, p.Path)
+		cmd.Printf("%s %s at %s\n",
+			SuccessStyle.Render("Created project"),
+			ProjectNameStyle.Render(fmt.Sprintf("%q", p.Name)),
+			PathStyle.Render(p.Path))
 		return nil
 	},
 }
