@@ -4,6 +4,7 @@ package picker
 import (
 	"errors"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/textinput"
@@ -37,24 +38,28 @@ type Model struct {
 	selectedIdx  int
 }
 
+// renderer targets stderr so color detection works even when stdout is
+// redirected (e.g. captured via $() or piped to /dev/null).
+var renderer = lipgloss.NewRenderer(os.Stderr)
+
 // styles for the picker
 var (
-	titleStyle = lipgloss.NewStyle().
+	titleStyle = renderer.NewStyle().
 			Bold(true).
 			Foreground(lipgloss.Color("212")).
 			MarginBottom(1)
 
-	selectedStyle = lipgloss.NewStyle().
+	selectedStyle = renderer.NewStyle().
 			Foreground(lipgloss.Color("212")).
 			Bold(true)
 
-	normalStyle = lipgloss.NewStyle().
+	normalStyle = renderer.NewStyle().
 			Foreground(lipgloss.Color("252"))
 
-	dimStyle = lipgloss.NewStyle().
+	dimStyle = renderer.NewStyle().
 			Foreground(lipgloss.Color("240"))
 
-	cursorStyle = lipgloss.NewStyle().
+	cursorStyle = renderer.NewStyle().
 			Foreground(lipgloss.Color("212"))
 )
 
@@ -255,7 +260,7 @@ func Run(items []Item, title string, selectedIdx int) (Item, error) {
 		return nil, errors.New("no items to select from")
 	}
 
-	p := tea.NewProgram(New(items, title, selectedIdx))
+	p := tea.NewProgram(New(items, title, selectedIdx), tea.WithOutput(os.Stderr))
 	model, err := p.Run()
 	if err != nil {
 		return nil, fmt.Errorf("picker error: %w", err)
