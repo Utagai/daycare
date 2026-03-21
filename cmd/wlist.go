@@ -28,10 +28,14 @@ var wlistCmd = &cobra.Command{
 
 		var p *models.Project
 		if len(args) == 0 {
-			return fmt.Errorf("automatic project selection not implemented yet. Please specify a project name.")
+			// Use picker to select project
+			p, err = selectProject(cfg)
+			if err != nil {
+				return err
+			}
+		} else {
+			p, err = project.GetProject(cfg, args[0])
 		}
-
-		p, err = project.GetProject(cfg, args[0])
 		if err != nil {
 			return err
 		}

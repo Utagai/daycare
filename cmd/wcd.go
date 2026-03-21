@@ -31,9 +31,25 @@ Designed to be used with eval: eval "$(daycare wcd)"`,
 
 		switch len(args) {
 		case 0:
-			return fmt.Errorf("automatic project/worktree selection not implemented yet. Please specify a project name and worktree name.")
+			// Use picker for both project and worktree
+			p, err = selectProject(cfg)
+			if err != nil {
+				return err
+			}
+			wt, err = selectWorktree(cfg, p, false)
+			if err != nil {
+				return err
+			}
 		case 1:
-			return fmt.Errorf("automatic worktree selection not implemented yet. Please specify both project name and worktree name.")
+			// Project name provided, use picker for worktree
+			p, err = project.GetProject(cfg, args[0])
+			if err != nil {
+				return err
+			}
+			wt, err = selectWorktree(cfg, p, false)
+			if err != nil {
+				return err
+			}
 		case 2:
 			p, err = project.GetProject(cfg, args[0])
 			if err != nil {

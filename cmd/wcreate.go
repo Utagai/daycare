@@ -31,17 +31,22 @@ If project name is not provided, it will be prompted.`,
 		}
 
 		var p *models.Project
+		var worktreeName string
 
 		if len(args) == 1 {
-			return fmt.Errorf("project name required: use 'wcreate <project-name> <name>' (picker not yet implemented)")
+			// Only worktree name provided, use picker for project
+			p, err = selectProject(cfg)
+			if err != nil {
+				return err
+			}
+			worktreeName = args[0]
+		} else {
+			p, err = project.GetProject(cfg, args[0])
+			if err != nil {
+				return err
+			}
+			worktreeName = args[1]
 		}
-
-		p, err = project.GetProject(cfg, args[0])
-		if err != nil {
-			return err
-		}
-
-		worktreeName := args[1]
 
 		wt, err := worktree.CreateWorktree(cfg, p, worktreeName)
 		if err != nil {
