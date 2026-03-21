@@ -1,0 +1,10 @@
+services:
+  e2e-tests:
+    image: daycare-test
+    volumes:
+      - ./e2e:/e2e:ro
+    command: ["bash", "/e2e/run.sh"]
+    stdin_open: true
+    tty: true
+    environment:
+      - CI=true
