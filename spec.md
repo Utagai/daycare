@@ -26,8 +26,16 @@ program are simplicity, efficiency and aesthetics.
 This project does not maintain its own database. Instead, it relies on the filesystem
 and Git to store all state. Projects are directories within the configured common
 directory, and worktrees are Git worktrees created within a `worktrees/` subdirectory
-structure (`worktrees/<project-name>/<worktree-name>`). This means if data is
-deleted or modified externally, daycare will reflect those changes on next execution.
+at the same level as projects (`worktrees/<project-name>/<worktree-name>`). This means
+if data is deleted or modified externally, daycare will reflect those changes on next execution.
+
+```
+<common-dir>/
+├── my-project/           # Main project (the main worktree)
+└── worktrees/
+    └── my-project/
+        └── feature/      # Worktree for feature branch
+```
 
 ## CLI Interface
 ```
