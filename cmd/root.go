@@ -25,8 +25,15 @@ func init() {
 	rootCmd.SetVersionTemplate(`{{.Name}} version {{.Version}}
 `)
 
-	// Add subcommands
-	// These will be added in later phases
+	rootCmd.AddCommand(pcreateCmd)
+	rootCmd.AddCommand(plistCmd)
+	rootCmd.AddCommand(pcdCmd)
+	rootCmd.AddCommand(wcreateCmd)
+	rootCmd.AddCommand(wlistCmd)
+	rootCmd.AddCommand(wcdCmd)
+	rootCmd.AddCommand(wremoveCmd)
+	rootCmd.AddCommand(completionCmd)
+	rootCmd.AddCommand(setupCmd)
 }
 
 // Execute runs the root command
