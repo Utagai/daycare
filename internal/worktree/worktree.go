@@ -14,6 +14,84 @@ import (
 	"github.com/utagai/daycare/internal/models"
 )
 
+// GitExecuter interface for executing git commands (allows mocking in tests)
+type GitExecuter interface {
+	Run(dir string, name string, args ...string) error
+	Output(dir string, name string, args ...string) ([]byte, error)
+}
+
+// FilesystemOps interface for filesystem operations (allows mocking in tests)
+type FilesystemOps interface {
+	MkdirAll(path string, perm os.FileMode) error
+}
+
+// defaultGitExecuter is the default implementation using os/exec
+type defaultGitExecuter struct{}
+
+func (e *defaultGitExecuter) Run(dir string, name string, args ...string) error {
+	cmd := exec.Command(name, args...)
+	cmd.Dir = dir
+
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+
+	if err := cmd.Run(); err != nil {
+		msg := strings.TrimSpace(stderr.String())
+		if msg != "" {
+			return fmt.Errorf("%w: %s", err, msg)
+		}
+		return err
+	}
+	return nil
+}
+
+func (e *defaultGitExecuter) Output(dir string, name string, args ...string) ([]byte, error) {
+	cmd := exec.Command(name, args...)
+	cmd.Dir = dir
+
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+
+	out, err := cmd.Output()
+	if err != nil {
+		var stderrStr string
+		if exitErr, ok := err.(*exec.ExitError); ok {
+			stderrStr = strings.TrimSpace(string(exitErr.Stderr))
+		}
+		if stderrStr != "" {
+			return nil, fmt.Errorf("git command failed: %s", stderrStr)
+		}
+		return nil, fmt.Errorf("git command failed: %w", err)
+	}
+	return out, nil
+}
+
+// defaultFilesystemOps is the default implementation using os package
+type defaultFilesystemOps struct{}
+
+func (f *defaultFilesystemOps) MkdirAll(path string, perm os.FileMode) error {
+	return os.MkdirAll(path, perm)
+}
+
+var gitExecuter GitExecuter = &defaultGitExecuter{}
+var filesystemOps FilesystemOps = &defaultFilesystemOps{}
+
+// SetGitExecuter sets the git executer (for testing)
+func SetGitExecuter(e GitExecuter) {
+	gitExecuter = e
+}
+
+// SetFilesystemOps sets the filesystem operations (for testing)
+func SetFilesystemOps(f FilesystemOps) {
+	filesystemOps = f
+}
+
+// ResetDeps resets the git executer and filesystem operations to default implementations
+func ResetDeps() {
+	gitExecuter = &defaultGitExecuter{}
+	filesystemOps = &defaultFilesystemOps{}
+}
+
 // worktreeDir returns the base directory where worktrees for a project are stored.
 // Per the spec: <common_dir>/worktrees/<project-name>/
 func worktreeDir(cfg *config.Config, projectName string) string {
@@ -23,18 +101,8 @@ func worktreeDir(cfg *config.Config, projectName string) string {
 // ListWorktrees returns all worktrees associated with the given project by
 // parsing the output of `git worktree list --porcelain`.
 func ListWorktrees(cfg *config.Config, p *models.Project) ([]*models.Worktree, error) {
-	cmd := exec.Command("git", "worktree", "list", "--porcelain")
-	cmd.Dir = p.Path
-
-	out, err := cmd.Output()
+	out, err := gitExecuter.Output(p.Path, "git", "worktree", "list", "--porcelain")
 	if err != nil {
-		var stderr string
-		if exitErr, ok := err.(*exec.ExitError); ok {
-			stderr = strings.TrimSpace(string(exitErr.Stderr))
-		}
-		if stderr != "" {
-			return nil, fmt.Errorf("git worktree list failed: %s", stderr)
-		}
 		return nil, fmt.Errorf("git worktree list failed: %w", err)
 	}
 
@@ -43,10 +111,7 @@ func ListWorktrees(cfg *config.Config, p *models.Project) ([]*models.Worktree, e
 
 // GetWorktreeInfo populates the LastCommit field of a worktree by running `git log -1`.
 func GetWorktreeInfo(wt *models.Worktree) error {
-	cmd := exec.Command("git", "log", "-1", "--format=%ct")
-	cmd.Dir = wt.Path
-
-	out, err := cmd.Output()
+	out, err := gitExecuter.Output(wt.Path, "git", "log", "-1", "--format=%ct")
 	if err != nil {
 		return nil
 	}
@@ -149,22 +214,13 @@ func CreateWorktree(cfg *config.Config, p *models.Project, name string) (*models
 	}
 
 	// Ensure the parent worktrees directory exists
-	if err := os.MkdirAll(worktreeDir(cfg, p.Name), 0755); err != nil {
+	if err := filesystemOps.MkdirAll(worktreeDir(cfg, p.Name), 0755); err != nil {
 		return nil, fmt.Errorf("failed to create worktrees directory: %w", err)
 	}
 
 	// git worktree add <path> -b <branch>
-	cmd := exec.Command("git", "worktree", "add", wtPath, "-b", name)
-	cmd.Dir = p.Path
-
-	var stderr bytes.Buffer
-	cmd.Stderr = &stderr
-
-	if err := cmd.Run(); err != nil {
-		msg := strings.TrimSpace(stderr.String())
-		if msg != "" {
-			return nil, fmt.Errorf("git worktree add failed: %s", msg)
-		}
+	err = gitExecuter.Run(p.Path, "git", "worktree", "add", wtPath, "-b", name)
+	if err != nil {
 		return nil, fmt.Errorf("git worktree add failed: %w", err)
 	}
 
@@ -203,17 +259,8 @@ func RemoveWorktree(cfg *config.Config, p *models.Project, name string) error {
 	}
 
 	// git worktree remove <path>
-	cmd := exec.Command("git", "worktree", "remove", target.Path)
-	cmd.Dir = p.Path
-
-	var stderr bytes.Buffer
-	cmd.Stderr = &stderr
-
-	if err := cmd.Run(); err != nil {
-		msg := strings.TrimSpace(stderr.String())
-		if msg != "" {
-			return fmt.Errorf("git worktree remove failed: %s", msg)
-		}
+	err = gitExecuter.Run(p.Path, "git", "worktree", "remove", target.Path)
+	if err != nil {
 		return fmt.Errorf("git worktree remove failed: %w", err)
 	}
 

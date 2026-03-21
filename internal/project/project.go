@@ -14,10 +14,115 @@ import (
 	"github.com/utagai/daycare/internal/models"
 )
 
+// GitExecuter interface for executing git commands (allows mocking in tests)
+type GitExecuter interface {
+	Run(dir string, name string, args ...string) error
+	Output(dir string, name string, args ...string) ([]byte, error)
+}
+
+// gitExecuter is the default implementation using os/exec
+type defaultGitExecuter struct{}
+
+func (e *defaultGitExecuter) Run(dir string, name string, args ...string) error {
+	cmd := exec.Command(name, args...)
+	cmd.Dir = dir
+
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+
+	if err := cmd.Run(); err != nil {
+		msg := strings.TrimSpace(stderr.String())
+		if msg != "" {
+			return fmt.Errorf("%w: %s", err, msg)
+		}
+		return err
+	}
+	return nil
+}
+
+func (e *defaultGitExecuter) Output(dir string, name string, args ...string) ([]byte, error) {
+	cmd := exec.Command(name, args...)
+	cmd.Dir = dir
+
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+
+	out, err := cmd.Output()
+	if err != nil {
+		msg := strings.TrimSpace(stderr.String())
+		if msg != "" {
+			return nil, fmt.Errorf("%w: %s", err, msg)
+		}
+		return nil, err
+	}
+	return out, nil
+}
+
+// FilesystemOps interface for filesystem operations (allows mocking in tests)
+type FilesystemOps interface {
+	ReadDir(path string) ([]os.DirEntry, error)
+	Stat(path string) (os.FileInfo, error)
+	MkdirAll(path string, perm os.FileMode) error
+	Mkdir(path string, perm os.FileMode) error
+	ReadFile(path string) ([]byte, error)
+	WriteFile(path string, data []byte, perm os.FileMode) error
+	OpenFile(path string, flag int, perm os.FileMode) (*os.File, error)
+}
+
+// defaultFilesystemOps is the default implementation using os package
+type defaultFilesystemOps struct{}
+
+func (f *defaultFilesystemOps) ReadDir(path string) ([]os.DirEntry, error) {
+	return os.ReadDir(path)
+}
+
+func (f *defaultFilesystemOps) Stat(path string) (os.FileInfo, error) {
+	return os.Stat(path)
+}
+
+func (f *defaultFilesystemOps) MkdirAll(path string, perm os.FileMode) error {
+	return os.MkdirAll(path, perm)
+}
+
+func (f *defaultFilesystemOps) Mkdir(path string, perm os.FileMode) error {
+	return os.Mkdir(path, perm)
+}
+
+func (f *defaultFilesystemOps) ReadFile(path string) ([]byte, error) {
+	return os.ReadFile(path)
+}
+
+func (f *defaultFilesystemOps) WriteFile(path string, data []byte, perm os.FileMode) error {
+	return os.WriteFile(path, data, perm)
+}
+
+func (f *defaultFilesystemOps) OpenFile(path string, flag int, perm os.FileMode) (*os.File, error) {
+	return os.OpenFile(path, flag, perm)
+}
+
+var gitExecuter GitExecuter = &defaultGitExecuter{}
+var filesystemOps FilesystemOps = &defaultFilesystemOps{}
+
+// SetGitExecuter sets the git executer (for testing)
+func SetGitExecuter(e GitExecuter) {
+	gitExecuter = e
+}
+
+// SetFilesystemOps sets the filesystem operations (for testing)
+func SetFilesystemOps(f FilesystemOps) {
+	filesystemOps = f
+}
+
+// ResetDeps resets the git executer and filesystem operations to default implementations
+func ResetDeps() {
+	gitExecuter = &defaultGitExecuter{}
+	filesystemOps = &defaultFilesystemOps{}
+}
+
 // isGitRepo returns true if the given directory is the root of a Git repository.
 func isGitRepo(dir string) bool {
 	gitDir := filepath.Join(dir, ".git")
-	info, err := os.Stat(gitDir)
+	info, err := filesystemOps.Stat(gitDir)
 	if err != nil {
 		return false
 	}
@@ -27,7 +132,7 @@ func isGitRepo(dir string) bool {
 // ListProjects scans the projects directory for Git repositories and returns them.
 // The "worktrees" subdirectory is excluded from results.
 func ListProjects(cfg *config.Config) ([]*models.Project, error) {
-	entries, err := os.ReadDir(cfg.ProjectsDir)
+	entries, err := filesystemOps.ReadDir(cfg.ProjectsDir)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil, fmt.Errorf("projects directory %q does not exist", cfg.ProjectsDir)
@@ -63,7 +168,7 @@ func ListProjects(cfg *config.Config) ([]*models.Project, error) {
 // GetProject returns a single project by name.
 func GetProject(cfg *config.Config, name string) (*models.Project, error) {
 	projectPath := filepath.Join(cfg.ProjectsDir, name)
-	info, err := os.Stat(projectPath)
+	info, err := filesystemOps.Stat(projectPath)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil, fmt.Errorf("project %q not found", name)
@@ -133,10 +238,7 @@ func FindProjectByPath(cfg *config.Config, targetPath string) (*models.Project, 
 
 // GetProjectInfo populates the LastCommit field of a project by running `git log -1`.
 func GetProjectInfo(p *models.Project) error {
-	cmd := exec.Command("git", "log", "-1", "--format=%ct")
-	cmd.Dir = p.Path
-
-	out, err := cmd.Output()
+	out, err := gitExecuter.Output(p.Path, "git", "log", "-1", "--format=%ct")
 	if err != nil {
 		// Repo may have no commits yet; leave LastCommit as zero value.
 		return nil
@@ -162,12 +264,12 @@ func CreateProject(cfg *config.Config, name string) (*models.Project, error) {
 	projectPath := filepath.Join(cfg.ProjectsDir, name)
 
 	// Ensure projects directory exists
-	if err := os.MkdirAll(cfg.ProjectsDir, 0755); err != nil {
+	if err := filesystemOps.MkdirAll(cfg.ProjectsDir, 0755); err != nil {
 		return nil, fmt.Errorf("failed to create projects directory: %w", err)
 	}
 
 	// Create project directory
-	if err := os.Mkdir(projectPath, 0755); err != nil {
+	if err := filesystemOps.Mkdir(projectPath, 0755); err != nil {
 		if os.IsExist(err) {
 			return nil, fmt.Errorf("project %q already exists", name)
 		}
@@ -175,13 +277,13 @@ func CreateProject(cfg *config.Config, name string) (*models.Project, error) {
 	}
 
 	// Initialize Git repository
-	if err := runGitCommand(projectPath, "git", "init"); err != nil {
+	if err := gitExecuter.Run(projectPath, "git", "init"); err != nil {
 		return nil, fmt.Errorf("failed to initialize Git repository: %w", err)
 	}
 
 	// Create .daycare/ directory
 	daycareDir := filepath.Join(projectPath, ".daycare")
-	if err := os.Mkdir(daycareDir, 0755); err != nil {
+	if err := filesystemOps.Mkdir(daycareDir, 0755); err != nil {
 		return nil, fmt.Errorf("failed to create .daycare directory: %w", err)
 	}
 
@@ -215,7 +317,7 @@ func CreateProject(cfg *config.Config, name string) (*models.Project, error) {
 
 // createScript creates an empty, executable shell script at the given path.
 func createScript(path string) error {
-	f, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_EXCL, 0755)
+	f, err := filesystemOps.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_EXCL, 0755)
 	if err != nil {
 		return err
 	}
@@ -229,12 +331,12 @@ func addToGitExclude(repoDir, pattern string) error {
 	excludePath := filepath.Join(repoDir, ".git", "info", "exclude")
 
 	// Ensure .git/info/ directory exists (it should after git init, but be safe)
-	if err := os.MkdirAll(filepath.Dir(excludePath), 0755); err != nil {
+	if err := filesystemOps.MkdirAll(filepath.Dir(excludePath), 0755); err != nil {
 		return err
 	}
 
 	// Check if pattern is already present
-	data, err := os.ReadFile(excludePath)
+	data, err := filesystemOps.ReadFile(excludePath)
 	if err != nil && !os.IsNotExist(err) {
 		return err
 	}
@@ -247,7 +349,7 @@ func addToGitExclude(repoDir, pattern string) error {
 	}
 
 	// Append the pattern
-	f, err := os.OpenFile(excludePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	f, err := filesystemOps.OpenFile(excludePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return err
 	}
@@ -260,33 +362,14 @@ func addToGitExclude(repoDir, pattern string) error {
 // createInitialCommit creates an initial empty commit in the repository.
 func createInitialCommit(repoDir string) error {
 	// Stage any existing files (there should be none, but be safe)
-	if err := runGitCommand(repoDir, "git", "add", "--all"); err != nil {
+	if err := gitExecuter.Run(repoDir, "git", "add", "--all"); err != nil {
 		return err
 	}
 
 	// Allow empty commit in case there's nothing to stage
-	if err := runGitCommand(repoDir, "git", "commit", "--allow-empty", "-m", "Initial commit"); err != nil {
+	if err := gitExecuter.Run(repoDir, "git", "commit", "--allow-empty", "-m", "Initial commit"); err != nil {
 		return err
 	}
 
-	return nil
-}
-
-// runGitCommand runs a git command in the given directory, returning an error
-// that includes stderr output if the command fails.
-func runGitCommand(dir string, name string, args ...string) error {
-	cmd := exec.Command(name, args...)
-	cmd.Dir = dir
-
-	var stderr bytes.Buffer
-	cmd.Stderr = &stderr
-
-	if err := cmd.Run(); err != nil {
-		msg := strings.TrimSpace(stderr.String())
-		if msg != "" {
-			return fmt.Errorf("%w: %s", err, msg)
-		}
-		return err
-	}
 	return nil
 }
