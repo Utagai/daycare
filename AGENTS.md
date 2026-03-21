@@ -66,6 +66,7 @@ type Worktree struct {
 - Located in `*_test.go` files in each package
 
 ### E2E Tests
+NOTE: DO NOT RUN E2E TESTS ON YOUR LOCAL MACHINE AS THEY WILL MODIFY YOUR FILESYSTEM AND GIT REPOSITORIES. USE THE PROVIDED DOCKER ENVIRONMENT.
 - Run in Docker container
 - Environment variables: `DAYCARE_BIN`, `DAYCARE_PROJECTS_DIR`
 
