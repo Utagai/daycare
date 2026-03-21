@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 
+	"charm.land/lipgloss/v2"
 	"charm.land/lipgloss/v2/table"
 	"github.com/spf13/cobra"
 	"github.com/utagai/daycare/internal/config"
@@ -47,6 +48,9 @@ var wlistCmd = &cobra.Command{
 		}
 
 		t := table.New().
+			Border(lipgloss.NormalBorder()).
+			BorderStyle(lipgloss.NewStyle().Foreground(borderColor)).
+			StyleFunc(tableStyles).
 			Headers("Name", "Path", "Last Commit")
 
 		if len(worktrees) == 0 {
