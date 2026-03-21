@@ -1,0 +1,94 @@
+package cmd
+
+import (
+	"fmt"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
+
+	"github.com/spf13/cobra"
+	"github.com/utagai/daycare/internal/config"
+	"github.com/utagai/daycare/internal/models"
+	"github.com/utagai/daycare/internal/project"
+	"github.com/utagai/daycare/internal/worktree"
+)
+
+func init() {
+	rootCmd.AddCommand(wcreateCmd)
+}
+
+var wcreateCmd = &cobra.Command{
+	Use:   "wcreate [project-name] <name>",
+	Short: "Create a new worktree",
+	Long: `Create a new worktree for the specified project.
+If project name is not provided, it will be prompted.`,
+	Args: cobra.MinimumNArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		cfg, err := config.Load()
+		if err != nil {
+			return fmt.Errorf("failed to load config: %w", err)
+		}
+
+		var p *models.Project
+
+		if len(args) == 1 {
+			return fmt.Errorf("project name required: use 'wcreate <project-name> <name>' (picker not yet implemented)")
+		}
+
+		p, err = project.GetProject(cfg, args[0])
+		if err != nil {
+			return err
+		}
+
+		worktreeName := args[1]
+
+		wt, err := worktree.CreateWorktree(cfg, p, worktreeName)
+		if err != nil {
+			return err
+		}
+
+		if err := runWcreateScript(p); err != nil {
+			return fmt.Errorf("failed to run wcreate script: %w", err)
+		}
+
+		cmd.Printf("Created worktree %q for project %q at %s\n", wt.Name, p.Name, wt.Path)
+		return nil
+	},
+}
+
+func runWcreateScript(p *models.Project) error {
+	scriptPath := filepath.Join(p.Path, ".daycare", "wcreate")
+	info, err := os.Stat(scriptPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return fmt.Errorf("failed to stat wcreate script: %w", err)
+	}
+	if info.IsDir() {
+		return nil
+	}
+
+	scriptPath, err = filepath.Abs(scriptPath)
+	if err != nil {
+		return fmt.Errorf("failed to get absolute path for wcreate script: %w", err)
+	}
+
+	c := exec.Command(scriptPath)
+	c.Stdout = os.Stdout
+	c.Stderr = os.Stderr
+
+	env := os.Environ()
+	env = append(env, "PROJECT_NAME="+p.Name)
+	c.Env = env
+
+	if err := c.Run(); err != nil {
+		if strings.Contains(err.Error(), "exit status 127") {
+			return nil
+		}
+		return fmt.Errorf("wcreate script failed: %w", err)
+	}
+
+	return nil
+}
