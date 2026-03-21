@@ -287,4 +287,4 @@ npm install
 **NOTE**: `wcreate` has access to some env vars:
 - `PROJECT_NAME`
 - `PROJECT_DIR`
-- `WORKTREE_PATH`
+- `WORKTREE_DIR`

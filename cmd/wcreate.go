@@ -96,7 +96,7 @@ func runWcreateScript(p *models.Project, wt *models.Worktree) error {
 	env := os.Environ()
 	env = append(env, "PROJECT_NAME="+p.Name)
 	env = append(env, "PROJECT_DIR="+p.Path)
-	env = append(env, "WORKTREE_PATH="+wt.Path)
+	env = append(env, "WORKTREE_DIR="+wt.Path)
 	c.Env = env
 
 	if err := c.Run(); err != nil {

@@ -277,7 +277,7 @@ func TestWcreateScriptEnv(t *testing.T) {
 	scriptContent := `#!/bin/bash
 echo "PROJECT_NAME=$PROJECT_NAME"
 echo "PROJECT_DIR=$PROJECT_DIR"
-echo "WORKTREE_PATH=$WORKTREE_PATH"
+echo "WORKTREE_DIR=$WORKTREE_DIR"
 `
 	if err := os.WriteFile(wcreateScript, []byte(scriptContent), 0755); err != nil {
 		t.Fatalf("failed to write wcreate script: %v", err)
@@ -291,7 +291,7 @@ echo "WORKTREE_PATH=$WORKTREE_PATH"
 	expectedVars := []string{
 		fmt.Sprintf("PROJECT_NAME=%s", scriptTestProject),
 		fmt.Sprintf("PROJECT_DIR=%s", filepath.Join(projectsDir, scriptTestProject)),
-		fmt.Sprintf("WORKTREE_PATH=%s", filepath.Join(projectsDir, "worktrees", scriptTestProject, "test-branch")),
+		fmt.Sprintf("WORKTREE_DIR=%s", filepath.Join(projectsDir, "worktrees", scriptTestProject, "test-branch")),
 	}
 
 	for _, expected := range expectedVars {
