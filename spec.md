@@ -109,10 +109,11 @@ daycare pcreate my-new-project
 
 #### `wcreate`
 Creates a new worktree within an existing project. The worktree is created at
-`worktrees/<project-name>/<name>` and uses `<name>` as both the worktree directory
-and branch name. If no project name is provided, opens an interactive fuzzy-search
-picker to select the project. Errors if a worktree with the given name already exists.
-After creating the worktree, executes the project's `.daycare/wcreate` script (if present).
+`worktrees/<project-name>/<name>` (at the same level as the project, not inside it)
+and uses `<name>` as both the worktree directory and branch name. If no project name
+is provided, opens an interactive fuzzy-search picker to select the project. Errors
+if a worktree with the given name already exists. After creating the worktree,
+executes the project's `.daycare/wcreate` script (if present).
 
 **Arguments:**
 | Argument | Description | Required |
@@ -129,7 +130,7 @@ daycare wcreate my-project feature/new-feature
 #### `wremove`
 Removes a worktree from a project. If no project name is provided, opens an
 interactive fuzzy-search picker to select the project. Prompts for confirmation
-before removal. The main worktree cannot be removed.
+before removal. The main project directory (the main worktree) cannot be removed.
 
 **Arguments:**
 | Argument | Description | Required |
@@ -178,9 +179,23 @@ eval "$(daycare wcd my-project)"            # Opens picker for worktree
 eval "$(daycare wcd my-project feature-branch)"
 ```
 
+#### `setup`
+Configures the shell to handle `pcd` and `wcd` commands by evaluating their output.
+Appends a wrapper function to the shell's rc file (currently zsh only).
+
+**Examples:**
+```
+daycare setup
+```
+
 ## Configuration
 A file can be placed at ~/.config/daycare/config.yaml to configure the common
 directory where projects are stored, and any other future settings.
+
+```yaml
+# ~/.config/daycare/config.yaml
+common_dir: /path/to/projects  # Required. The directory containing projects.
+```
 
 Projects can contain a `.daycare/` directory with script files for project-specific
 customization:
@@ -200,15 +215,7 @@ Daycare uses Cobra's built-in shell completion support to provide completions
 for all subcommands, flags, and dynamic project/worktree names from the
 filesystem.
 
-Supported shells: **Bash**, **Zsh**, **Fish**, **PowerShell**.
-
 **Setup:**
-```
-daycare completion bash > /etc/bash_completion.d/daycare      # Linux
-daycare completion zsh > "${fpath[1]}/_daycare"              # Zsh
-daycare completion fish > ~/.config/fish/completions/daycare.fish
-```
-
 Daycare also ships with a setup script that configures your shell (currently zsh)
 to handle the `pcd` and `wcd` commands by evaluating their output.
 
