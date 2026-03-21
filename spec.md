@@ -23,7 +23,11 @@ program are simplicity, efficiency and aesthetics.
 - Interactive fuzzy-search picker (using Charmbracelet Bubble Tea) for project/worktree selection when arguments are omitted
 
 ### Data Handling
-This project does not persist any data beyond what the filesystem provides. It relies on the directory structure to determine projects and worktrees.
+This project does not maintain its own database. Instead, it relies on the filesystem
+and Git to store all state. Projects are directories within the configured common
+directory, and worktrees are Git worktrees created within a `worktrees/` subdirectory
+structure (`worktrees/<project-name>/<worktree-name>`). This means if data is
+deleted or modified externally, daycare will reflect those changes on next execution.
 
 ## CLI Interface
 ```
