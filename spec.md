@@ -82,8 +82,9 @@ daycare wlist my-project       # List worktrees for a specific project
 
 #### `pcreate`
 Creates a new project. Creates the project directory, initializes a Git repository,
-creates a `.daycare` script file, and adds it to `.git/info/exclude` for local ignore.
-Prompts for the project name if not provided.
+creates a `.daycare/` directory with `pwcd` and `wcreate` script files, and adds
+`.daycare/` to `.git/info/exclude` for local ignore. Prompts for the project name
+if not provided.
 
 **Arguments:**
 | Argument | Description | Required |
@@ -101,6 +102,7 @@ Creates a new worktree within an existing project. The worktree is created at
 `worktrees/<project-name>/<name>` and uses `<name>` as both the worktree directory
 and branch name. If no project name is provided, opens an interactive fuzzy-search
 picker to select the project. Errors if a worktree with the given name already exists.
+After creating the worktree, executes the project's `.daycare/wcreate` script (if present).
 
 **Arguments:**
 | Argument | Description | Required |
@@ -133,9 +135,9 @@ daycare wremove my-project feature-branch
 ```
 
 #### `pcd`
-Outputs an eval-able script that executes the project's `.daycare` hook (if present)
-and changes to the project directory. If no project name is provided, opens an
-interactive fuzzy-search picker to select the project.
+Outputs an eval-able script that executes the project's `.daycare/pwcd` script
+(if present) and changes to the project directory. If no project name is provided,
+opens an interactive fuzzy-search picker to select the project.
 
 **Arguments:**
 | Argument | Description | Required |
@@ -149,9 +151,9 @@ eval "$(daycare pcd my-project)"
 ```
 
 #### `wcd`
-Outputs an eval-able script that executes the project's `.daycare` hook (if present)
-and changes to the worktree directory. If no project name is provided, opens an
-interactive fuzzy-search picker to select the project.
+Outputs an eval-able script that executes the project's `.daycare/pwcd` script
+(if present) and changes to the worktree directory. If no project name is provided,
+opens an interactive fuzzy-search picker to select the project.
 
 **Arguments:**
 | Argument | Description | Required |
@@ -170,10 +172,18 @@ eval "$(daycare wcd my-project feature-branch)"
 A file can be placed at ~/.config/daycare/config.yaml to configure the common
 directory where projects are stored, and any other future settings.
 
-Projects can contain a hidden shell script named `.daycare`. When the user runs
-`daycare pcd` or `daycare wcd`, the output script includes execution of this hook,
-allowing users to set up project-specific environments, such as activating a
-virtual environment or setting environment variables.
+Projects can contain a `.daycare/` directory with script files for project-specific
+customization:
+
+- `.daycare/pwcd` - Executed when running `daycare pcd` or `daycare wcd`. Useful
+  for setting up project-specific environments, such as activating a virtual
+  environment or setting environment variables.
+- `.daycare/wcreate` - Executed when running `daycare wcreate` to provision a new
+  worktree. Useful for copying non-git-tracked files (e.g., `.cache/`, `.claude/`)
+  from the main project into the new worktree.
+
+Both scripts are optional. If present, they are executed by the shell (sourced)
+rather than run as a subprocess.
 
 ## Shell Integration
 Daycare uses Cobra's built-in shell completion support to provide completions
