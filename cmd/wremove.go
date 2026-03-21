@@ -29,41 +29,61 @@ it will be prompted. The main worktree cannot be removed.`,
 		}
 
 		var p *models.Project
-
-		if len(args) == 0 {
-			return fmt.Errorf("automatic project selection not implemented yet. Please specify a project name.")
-		}
-
-		p, err = project.GetProject(cfg, args[0])
-		if err != nil {
-			return err
-		}
-
-		if len(args) < 2 {
-			return fmt.Errorf("worktree name required: use 'wremove <project-name> <worktree-name>' (picker not yet implemented)")
-		}
-
-		worktreeName := args[1]
-
-		worktrees, err := worktree.ListWorktrees(cfg, p)
-		if err != nil {
-			return err
-		}
-
 		var target *models.Worktree
-		for _, wt := range worktrees {
-			if wt.Name == worktreeName {
-				target = wt
-				break
+
+		switch len(args) {
+		case 0:
+			// Use picker for both project and worktree
+			p, err = selectProject(cfg)
+			if err != nil {
+				return err
 			}
-		}
+			// Exclude main worktree from selection
+			target, err = selectWorktree(cfg, p, true)
+			if err != nil {
+				return err
+			}
+		case 1:
+			// Project name provided, use picker for worktree
+			p, err = project.GetProject(cfg, args[0])
+			if err != nil {
+				return err
+			}
+			// Exclude main worktree from selection
+			target, err = selectWorktree(cfg, p, true)
+			if err != nil {
+				return err
+			}
+		case 2:
+			p, err = project.GetProject(cfg, args[0])
+			if err != nil {
+				return err
+			}
 
-		if target == nil {
-			return fmt.Errorf("worktree %q not found in project %q", worktreeName, p.Name)
-		}
+			
+      
+      := args[1]
+			worktrees, err := worktree.ListWorktrees(cfg, p)
+			if err != nil {
+				return err
+			}
 
-		if target.IsMain {
-			return fmt.Errorf("cannot remove the main worktree of project %q", p.Name)
+			for _, wt := range worktrees {
+				if wt.Name == worktreeName {
+					target = wt
+					break
+				}
+			}
+
+			if target == nil {
+				return fmt.Errorf("worktree %q not found in project %q", worktreeName, p.Name)
+			}
+
+			if target.IsMain {
+				return fmt.Errorf("cannot remove the main worktree of project %q", p.Name)
+			}
+		default:
+			return fmt.Errorf("too many arguments")
 		}
 
 		cmd.Printf("%s %s at %s? %s ",
@@ -84,13 +104,13 @@ it will be prompted. The main worktree cannot be removed.`,
 			return nil
 		}
 
-		if err := worktree.RemoveWorktree(cfg, p, worktreeName); err != nil {
+		if err := worktree.RemoveWorktree(cfg, p, target.Name); err != nil {
 			return err
 		}
 
 		cmd.Printf("%s %s %s %s\n",
 			SuccessStyle.Render("Removed worktree"),
-			ProjectNameStyle.Render(fmt.Sprintf("%q", worktreeName)),
+			ProjectNameStyle.Render(fmt.Sprintf("%q", target.Name)),
 			MutedStyle.Render("from project"),
 			ProjectNameStyle.Render(fmt.Sprintf("%q", p.Name)))
 		return nil

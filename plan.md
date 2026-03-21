@@ -182,7 +182,7 @@ daycare/
 - Add dynamic completions for project/worktree names
 
 ### Step 8.2: Setup Command (`cmd/setup.go`)
-- Append wrapper function to `~/.zshrc`
+- Print out wrapper function to `~/.zshrc` that user can append to their ~/.zshrc.
 - Wrapper intercepts `pcd` and `wcd` to auto-eval their output
 - Preserve existing `daycare` command for other invocations
 
