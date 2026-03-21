@@ -9,11 +9,11 @@ import (
 func TestLoadDefault(t *testing.T) {
 	// Save and restore HOME
 	oldHome := os.Getenv("HOME")
-	defer os.Setenv("HOME", oldHome)
+	defer func() { _ = os.Setenv("HOME", oldHome) }()
 
 	// Create a temporary HOME directory
 	tmpDir := t.TempDir()
-	os.Setenv("HOME", tmpDir)
+	_ = os.Setenv("HOME", tmpDir)
 
 	// Ensure no config file exists
 	configPath := filepath.Join(tmpDir, ".config", "daycare", "config.yaml")
@@ -36,11 +36,11 @@ func TestLoadDefault(t *testing.T) {
 func TestLoadWithCustomConfig(t *testing.T) {
 	// Save and restore HOME
 	oldHome := os.Getenv("HOME")
-	defer os.Setenv("HOME", oldHome)
+	defer func() { _ = os.Setenv("HOME", oldHome) }()
 
 	// Create a temporary HOME directory
 	tmpDir := t.TempDir()
-	os.Setenv("HOME", tmpDir)
+	_ = os.Setenv("HOME", tmpDir)
 
 	// Create config directory and file
 	configDir := filepath.Join(tmpDir, ".config", "daycare")
@@ -69,11 +69,11 @@ func TestLoadWithCustomConfig(t *testing.T) {
 func TestLoadWithEmptyProjectsDir(t *testing.T) {
 	// Save and restore HOME
 	oldHome := os.Getenv("HOME")
-	defer os.Setenv("HOME", oldHome)
+	defer func() { _ = os.Setenv("HOME", oldHome) }()
 
 	// Create a temporary HOME directory
 	tmpDir := t.TempDir()
-	os.Setenv("HOME", tmpDir)
+	_ = os.Setenv("HOME", tmpDir)
 
 	// Create config directory and file with empty projects_dir
 	configDir := filepath.Join(tmpDir, ".config", "daycare")
@@ -103,11 +103,11 @@ func TestLoadWithEmptyProjectsDir(t *testing.T) {
 func TestLoadWithTildeExpansion(t *testing.T) {
 	// Save and restore HOME
 	oldHome := os.Getenv("HOME")
-	defer os.Setenv("HOME", oldHome)
+	defer func() { _ = os.Setenv("HOME", oldHome) }()
 
 	// Create a temporary HOME directory
 	tmpDir := t.TempDir()
-	os.Setenv("HOME", tmpDir)
+	_ = os.Setenv("HOME", tmpDir)
 
 	// Create config directory and file with tilde in path
 	configDir := filepath.Join(tmpDir, ".config", "daycare")
@@ -137,11 +137,11 @@ func TestLoadWithTildeExpansion(t *testing.T) {
 func TestSave(t *testing.T) {
 	// Save and restore HOME
 	oldHome := os.Getenv("HOME")
-	defer os.Setenv("HOME", oldHome)
+	defer func() { _ = os.Setenv("HOME", oldHome) }()
 
 	// Create a temporary HOME directory
 	tmpDir := t.TempDir()
-	os.Setenv("HOME", tmpDir)
+	_ = os.Setenv("HOME", tmpDir)
 
 	// Create config
 	cfg := &Config{
