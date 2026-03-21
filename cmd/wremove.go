@@ -60,9 +60,7 @@ it will be prompted. The main worktree cannot be removed.`,
 				return err
 			}
 
-			
-      
-      := args[1]
+			worktreeName := args[1]
 			worktrees, err := worktree.ListWorktrees(cfg, p)
 			if err != nil {
 				return err
