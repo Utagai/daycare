@@ -59,8 +59,6 @@ daycare/
   - Version command
   - Register all subcommands
 
-**Commit:** `feat: initialize project with Go module, dependencies, and config system`
-
 ---
 
 ## Phase 2: Core Models & Filesystem Operations
@@ -81,8 +79,6 @@ daycare/
 - `RemoveWorktree(project, name)` - Run `git worktree remove` (with confirmation logic in command)
 - Validate worktree doesn't already exist
 
-**Commit:** `feat: implement core models and filesystem operations for projects and worktrees`
-
 ---
 
 ## Phase 3: List Commands
@@ -96,8 +92,6 @@ daycare/
 - Accept optional `[project-name]` argument
 - If omitted, use picker to select project
 - Output worktrees as table (name, branch, path)
-
-**Commit:** `feat: implement plist and wlist commands`
 
 ---
 
@@ -117,8 +111,6 @@ daycare/
 - Create worktree via `internal/worktree`
 - Execute `.daycare/wcreate` script after creation
 - Error if worktree name already exists
-
-**Commit:** `feat: implement pcreate and wcreate commands`
 
 ---
 
@@ -140,8 +132,6 @@ daycare/
 - Output similar shell script for worktree path
 - Execute `.daycare/pwcd` before cd
 
-**Commit:** `feat: implement pcd and wcd commands`
-
 ---
 
 ## Phase 6: Remove Command
@@ -152,8 +142,6 @@ daycare/
 - **Skip** main worktree (detect via `git worktree list`)
 - Prompt for confirmation before removal
 - Remove via `git worktree remove`
-
-**Commit:** `feat: implement wremove command with confirmation`
 
 ---
 
@@ -170,8 +158,6 @@ daycare/
 - Replace picker calls in all commands that need them
 - Ensure picker works in terminal with proper key handling
 
-**Commit:** `feat: add interactive fuzzy-search picker for project/worktree selection`
-
 ---
 
 ## Phase 8: Shell Integration
@@ -186,65 +172,69 @@ daycare/
 - Wrapper intercepts `pcd` and `wcd` to auto-eval their output
 - Preserve existing `daycare` command for other invocations
 
-**Commit:** `feat: add shell completion and setup command`
-
 ---
 
-## Phase 9: Testing
-All tests should be ran in a containerized environment if they require filesystem ($HOME or projects dir) or git operations to ensure consistency and isolation.
+## Phase 9: Unit Testing
 
-### Step 9.1: Containerized Testing Environment
+Introduce/use mocks/interfaces when needed to isolate filesystem and git operations for testing.
+
+NOTE: The program has interactive elements. We may need to implement flags
+to bypass the interactive picker for testing purposes (e.g. -y for wremove to
+skip confirmation).
+
+### Step 9.1: Unit Tests
+- Test config loading
+- Test project listing/scanning
+- Test worktree operations (mock git commands -- may need to introduce interfaces for easier testing)
+- Test picker logic
+
+## Phase 10: Integration/E2E Testing
+
+All tests should be ran in a containerized environment if they require
+filesystem ($HOME or projects dir) or git operations to ensure consistency and
+isolation.
+
+NOTE: The program has interactive elements. We may need to implement flags
+to bypass the interactive picker for testing purposes (e.g. -y for wremove to
+skip confirmation).
+
+### Step 10.1: Containerized Testing Environment
 - Create `Dockerfile` for test environment
 - Build container with Go, Git, and daycare binary
 
-### Step 9.2: Unit Tests
-- Test config loading
-- Test project listing/scanning
-- Test worktree operations (mock git commands)
-- Test picker logic
-
-### Step 9.3: Integration Tests
-- Create temp directories for test projects
-- Test full command execution
-- Test worktree lifecycle (create, list, remove)
-- Test picker integration with mock data
-
-### Step 9.4: E2E Tests (Containerized)
+### Step 10.2: Integration/E2E Tests
 - Test scenarios:
   1. Create project, verify `.daycare/` structure
-  2. Create worktree, verify git worktree list output
+  2. Create worktree, verify git worktree list output and .daycare/wcreate execution.
   3. Remove worktree with confirmation
   4. Test `plist` and `wlist` output
   5. Test `pcd`/`wcd` shell script output
-- Use `docker compose` for test orchestration
+  6. Test shell completion generation
+  7. Test setup command output
 - Clean up containers after tests
-
-**Commit:** `test: add unit, integration, and E2E tests`
 
 ---
 
-## Phase 10: CI/CD
+## Phase 11: CI/CD
 
-### Step 10.1: GitHub Actions Workflow
+### Step 11.1: GitHub Actions Workflow
 - **Lint/Format Check**: Run `gofmt`, `golint`, or `staticcheck`
 - **Tests**: Run unit and integration tests on multiple Go versions
 - **E2E Tests**: Build Docker image, run containerized E2E tests
 - **Cross-compile**: Build binaries for Linux, macOS, Windows
 
-**Commit:** `ci: add GitHub Actions workflow for lint, test, and E2E`
-
 ---
 
-## Phase 11: Documentation
+## Phase 12: Documentation
 
-### Step 11.1: README.md
+### Step 12.1: README.md
 - Project description
 - Quick start / installation instructions
 - Basic usage examples for each command
 - Shell setup instructions
 - Configuration reference
 
-### Step 11.2: AGENTS.md & CLAUDE.md
+### Step 12.2: AGENTS.md & CLAUDE.md
 - Create `AGENTS.md` with:
   - Project overview
   - Key files and their purposes
@@ -252,24 +242,3 @@ All tests should be ran in a containerized environment if they require filesyste
   - Testing strategy
 - Create `CLAUDE.md` as symlink to `AGENTS.md`
 
-**Commit:** `docs: add README, AGENTS.md, and CLAUDE.md`
-
----
-
-## Summary
-
-| Phase | Description | Files Changed |
-|-------|-------------|---------------|
-| 1 | Project scaffolding | go.mod, main.go, config |
-| 2 | Core models & operations | internal/* |
-| 3 | List commands | cmd/plist.go, cmd/wlist.go |
-| 4 | Create commands | cmd/pcreate.go, cmd/wcreate.go |
-| 5 | CD commands | cmd/pcd.go, cmd/wcd.go |
-| 6 | Remove command | cmd/wremove.go |
-| 7 | TUI picker | internal/picker/, integrate |
-| 8 | Shell integration | cmd/completion.go, cmd/setup.go |
-| 9 | Testing | *_test.go, Dockerfile, docker-compose.yml |
-| 10 | CI/CD | .github/workflows/*.yml |
-| 11 | Documentation | README.md, AGENTS.md, CLAUDE.md |
-
-Total: **11 commits** (can be merged or split further if needed)
