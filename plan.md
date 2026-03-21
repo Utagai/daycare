@@ -179,7 +179,7 @@ daycare/
 
 ### Step 8.1: Completion Command (`cmd/completion.go`)
 - Use Cobra's built-in shell completion generation
-- Register completion command for Bash, Zsh, Fish, PowerShell
+- Register completion command for zsh
 - Add dynamic completions for project/worktree names
 
 ### Step 8.2: Setup Command (`cmd/setup.go`)
