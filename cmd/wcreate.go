@@ -58,7 +58,7 @@ If project name is not provided, it will be prompted.`,
 			return err
 		}
 
-		if err := runWcreateScript(p); err != nil {
+		if err := runWcreateScript(p, wt); err != nil {
 			return fmt.Errorf("failed to run wcreate script: %w", err)
 		}
 
@@ -71,7 +71,7 @@ If project name is not provided, it will be prompted.`,
 	},
 }
 
-func runWcreateScript(p *models.Project) error {
+func runWcreateScript(p *models.Project, wt *models.Worktree) error {
 	scriptPath := filepath.Join(p.Path, ".daycare", "wcreate")
 	info, err := os.Stat(scriptPath)
 	if err != nil {
@@ -95,6 +95,8 @@ func runWcreateScript(p *models.Project) error {
 
 	env := os.Environ()
 	env = append(env, "PROJECT_NAME="+p.Name)
+	env = append(env, "PROJECT_DIR="+p.Path)
+	env = append(env, "WORKTREE_PATH="+wt.Path)
 	c.Env = env
 
 	if err := c.Run(); err != nil {

@@ -264,6 +264,45 @@ func TestWcreateScriptExecution(t *testing.T) {
 	os.RemoveAll(filepath.Join(projectsDir, scriptTestProject))
 }
 
+func TestWcreateScriptEnv(t *testing.T) {
+	// We set a bunch of env vars for the wcreate script:
+	//	- PROJECT_NAME
+	// 	- PROJECT_DIR
+	// 	- WORKTREE_PATH
+	// We want to test that these are actually set.
+	scriptTestProject := projectName + "-wcreate-env"
+	runCmd(daycareBin, "pcreate", scriptTestProject)
+
+	wcreateScript := filepath.Join(projectsDir, scriptTestProject, ".daycare", "wcreate")
+	scriptContent := `#!/bin/bash
+echo "PROJECT_NAME=$PROJECT_NAME"
+echo "PROJECT_DIR=$PROJECT_DIR"
+echo "WORKTREE_PATH=$WORKTREE_PATH"
+`
+	if err := os.WriteFile(wcreateScript, []byte(scriptContent), 0755); err != nil {
+		t.Fatalf("failed to write wcreate script: %v", err)
+	}
+
+	out, err := runCmd(daycareBin, "wcreate", scriptTestProject, "test-branch")
+	if err != nil {
+		t.Fatalf("wcreate failed: %v", err)
+	}
+
+	expectedVars := []string{
+		fmt.Sprintf("PROJECT_NAME=%s", scriptTestProject),
+		fmt.Sprintf("PROJECT_DIR=%s", filepath.Join(projectsDir, scriptTestProject)),
+		fmt.Sprintf("WORKTREE_PATH=%s", filepath.Join(projectsDir, "worktrees", scriptTestProject, "test-branch")),
+	}
+
+	for _, expected := range expectedVars {
+		if !containsString(out, expected) {
+			t.Errorf("wcreate script output should contain %q, got: %s", expected, out)
+		}
+	}
+
+	os.RemoveAll(filepath.Join(projectsDir, scriptTestProject))
+}
+
 func TestWcdScriptOutput(t *testing.T) {
 	scriptTestProject := projectName + "-wcd-script"
 
