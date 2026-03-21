@@ -83,6 +83,54 @@ func GetProject(cfg *config.Config, name string) (*models.Project, error) {
 	}, nil
 }
 
+// FindProjectByPath returns the project that contains the given path.
+// It checks if the path is the project root or within its worktrees directory.
+func FindProjectByPath(cfg *config.Config, targetPath string) (*models.Project, error) {
+	absPath, err := filepath.Abs(targetPath)
+	if err != nil {
+		return nil, err
+	}
+	absPath = filepath.Clean(absPath)
+
+	projectsDir := filepath.Clean(cfg.ProjectsDir)
+
+	// Check if target is within projectsDir
+	if !strings.HasPrefix(absPath, projectsDir) {
+		return nil, nil
+	}
+
+	relPath, err := filepath.Rel(projectsDir, absPath)
+	if err != nil {
+		return nil, err
+	}
+
+	parts := strings.Split(filepath.ToSlash(relPath), "/")
+	if len(parts) < 1 {
+		return nil, nil
+	}
+
+	projectName := parts[0]
+
+	// Skip the worktrees directory itself
+	if projectName == "worktrees" {
+		if len(parts) < 2 {
+			return nil, nil
+		}
+		projectName = parts[1]
+	}
+
+	// Verify the project exists
+	projectPath := filepath.Join(projectsDir, projectName)
+	if !isGitRepo(projectPath) {
+		return nil, nil
+	}
+
+	return &models.Project{
+		Name: projectName,
+		Path: projectPath,
+	}, nil
+}
+
 // GetProjectInfo populates the LastCommit field of a project by running `git log -1`.
 func GetProjectInfo(p *models.Project) error {
 	cmd := exec.Command("git", "log", "-1", "--format=%ct")
