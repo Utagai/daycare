@@ -26,4 +26,7 @@ type Worktree struct {
 	ProjectName string
 	// IsMain indicates whether this is the main worktree (i.e., the project directory itself).
 	IsMain bool
+	// LastCommit is the time of the most recent commit in the worktree's branch.
+	// It is zero if the branch has no commits yet.
+	LastCommit time.Time
 }

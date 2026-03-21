@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/utagai/daycare/internal/config"
 	"github.com/utagai/daycare/internal/models"
@@ -38,6 +39,30 @@ func ListWorktrees(cfg *config.Config, p *models.Project) ([]*models.Worktree, e
 	}
 
 	return parseWorktreePorcelain(p.Name, out), nil
+}
+
+// GetWorktreeInfo populates the LastCommit field of a worktree by running `git log -1`.
+func GetWorktreeInfo(wt *models.Worktree) error {
+	cmd := exec.Command("git", "log", "-1", "--format=%ct")
+	cmd.Dir = wt.Path
+
+	out, err := cmd.Output()
+	if err != nil {
+		return nil
+	}
+
+	trimmed := strings.TrimSpace(string(out))
+	if trimmed == "" {
+		return nil
+	}
+
+	var epoch int64
+	if _, err := fmt.Sscanf(trimmed, "%d", &epoch); err != nil {
+		return fmt.Errorf("failed to parse commit timestamp %q: %w", trimmed, err)
+	}
+
+	wt.LastCommit = time.Unix(epoch, 0)
+	return nil
 }
 
 // parseWorktreePorcelain parses the `--porcelain` output of `git worktree list`.

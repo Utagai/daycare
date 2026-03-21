@@ -40,8 +40,14 @@ var wlistCmd = &cobra.Command{
 			return err
 		}
 
+		for _, wt := range worktrees {
+			if err := worktree.GetWorktreeInfo(wt); err != nil {
+				return fmt.Errorf("failed to get info for worktree %s: %w", wt.Name, err)
+			}
+		}
+
 		t := table.New().
-			Headers("Name", "Branch", "Path")
+			Headers("Name", "Path", "Last Commit")
 
 		if len(worktrees) == 0 {
 			cmd.Println("No worktrees found.")
@@ -49,7 +55,7 @@ var wlistCmd = &cobra.Command{
 		}
 
 		for _, wt := range worktrees {
-			t.Row(wt.Name, wt.Branch, wt.Path)
+			t.Row(wt.Name, wt.Path, timeAgo(wt.LastCommit))
 		}
 
 		cmd.Println(t.String())
