@@ -4,6 +4,7 @@ package e2e
 
 import (
 	"bytes"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -230,6 +231,55 @@ func TestProjectCreateDuplicate(t *testing.T) {
 	if err == nil {
 		t.Errorf("pcreate should fail when creating duplicate project")
 	}
+}
+
+func TestWcreateScriptExecution(t *testing.T) {
+	scriptTestProject := projectName + "-wcreate-script"
+	markerPath := filepath.Join(projectsDir, scriptTestProject, "marker.txt")
+
+	runCmd(daycareBin, "pcreate", scriptTestProject)
+
+	wcreateScript := filepath.Join(projectsDir, scriptTestProject, ".daycare", "wcreate")
+	scriptContent := fmt.Sprintf("#!/bin/bash\necho \"wcreate ran\" > %q\n", markerPath)
+	if err := os.WriteFile(wcreateScript, []byte(scriptContent), 0755); err != nil {
+		t.Fatalf("failed to write wcreate script: %v", err)
+	}
+
+	runCmd(daycareBin, "wcreate", scriptTestProject, "test-branch")
+
+	if _, err := os.Stat(markerPath); os.IsNotExist(err) {
+		t.Errorf(".daycare/wcreate script should have been executed, marker file not found at %s", markerPath)
+	}
+
+	os.RemoveAll(filepath.Join(projectsDir, scriptTestProject))
+}
+
+func TestWcdScriptOutput(t *testing.T) {
+	scriptTestProject := projectName + "-wcd-script"
+
+	runCmd(daycareBin, "pcreate", scriptTestProject)
+
+	pwcdScript := filepath.Join(projectsDir, scriptTestProject, ".daycare", "pwcd")
+	pwcdContent := `#!/bin/bash
+echo "custom pwcd setup"
+`
+	if err := os.WriteFile(pwcdScript, []byte(pwcdContent), 0755); err != nil {
+		t.Fatalf("failed to write pwcd script: %v", err)
+	}
+
+	runCmd(daycareBin, "wcreate", scriptTestProject, "test-branch")
+
+	out, err := runCmd(daycareBin, "wcd", scriptTestProject, "test-branch")
+	if err != nil {
+		t.Fatalf("wcd failed: %v", err)
+	}
+
+	expectedSource := fmt.Sprintf(". %q", pwcdScript)
+	if !containsString(out, expectedSource) {
+		t.Errorf("wcd output should contain the pwcd sourcing command %q, got: %s", expectedSource, out)
+	}
+
+	os.RemoveAll(filepath.Join(projectsDir, scriptTestProject))
 }
 
 func TestWorktreeCreateDuplicate(t *testing.T) {
