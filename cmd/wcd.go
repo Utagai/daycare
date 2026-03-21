@@ -16,10 +16,7 @@ func init() {
 		if len(args) == 0 {
 			return projectNameCompletion(cmd, args, toComplete)
 		}
-		if len(args) == 1 {
-			return worktreeNameCompletion(cmd, args, toComplete)
-		}
-		return nil, cobra.ShellCompDirectiveNoFileComp
+		return worktreeNameCompletion(cmd, args, toComplete)
 	}
 }
 
@@ -49,14 +46,23 @@ Designed to be used with eval: eval "$(daycare wcd)"`,
 				return err
 			}
 		case 1:
-			// Project name provided, use picker for worktree
-			p, err = project.GetProject(cfg, args[0])
+			// Worktree name provided, use picker for project
+			p, err = selectProject(cfg)
 			if err != nil {
 				return err
 			}
-			wt, err = selectWorktree(cfg, p, false)
+			worktrees, err := worktree.ListWorktrees(cfg, p)
 			if err != nil {
 				return err
+			}
+			for _, w := range worktrees {
+				if w.Name == args[0] {
+					wt = w
+					break
+				}
+			}
+			if wt == nil {
+				return fmt.Errorf("worktree %q not found in project %q", args[0], p.Name)
 			}
 		case 2:
 			p, err = project.GetProject(cfg, args[0])

@@ -19,10 +19,7 @@ func init() {
 		if len(args) == 0 {
 			return projectNameCompletion(cmd, args, toComplete)
 		}
-		if len(args) == 1 {
-			return worktreeNameCompletion(cmd, args, toComplete)
-		}
-		return nil, cobra.ShellCompDirectiveNoFileComp
+		return worktreeNameCompletion(cmd, args, toComplete)
 	}
 }
 
