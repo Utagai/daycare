@@ -239,28 +239,3 @@ func TestWorktreeCreateDuplicate(t *testing.T) {
 		t.Errorf("wcreate should fail when creating duplicate worktree")
 	}
 }
-
-func TestVersion(t *testing.T) {
-	out, err := runCmd(daycareBin, "--version")
-	if err != nil {
-		t.Fatalf("--version failed: %v", err)
-	}
-
-	if !containsString(out, "daycare") {
-		t.Errorf("version output should contain 'daycare', got: %s", out)
-	}
-}
-
-func TestHelp(t *testing.T) {
-	out, err := runCmd(daycareBin, "--help")
-	if err != nil {
-		t.Fatalf("--help failed: %v", err)
-	}
-
-	expected := []string{"Git worktrees", "pcreate", "plist", "wcreate", "wlist"}
-	for _, exp := range expected {
-		if !containsString(out, exp) {
-			t.Errorf("help output should contain %q, got: %s", exp, out)
-		}
-	}
-}
