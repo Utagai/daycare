@@ -1,14 +1,13 @@
 package cmd
 
 import (
-	"bufio"
+	"errors"
 	"fmt"
-	"os"
-	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/utagai/daycare/internal/config"
 	"github.com/utagai/daycare/internal/models"
+	"github.com/utagai/daycare/internal/picker"
 	"github.com/utagai/daycare/internal/project"
 	"github.com/utagai/daycare/internal/worktree"
 )
@@ -84,21 +83,22 @@ it will be prompted. The main worktree cannot be removed.`,
 			return fmt.Errorf("too many arguments")
 		}
 
-		cmd.Printf("%s %s at %s? %s ",
-			WarningStyle.Render("Remove worktree"),
+		question := fmt.Sprintf("%s Remove worktree %s at %s?",
+			WarningStyle.Render("!"),
 			ProjectNameStyle.Render(fmt.Sprintf("%q", target.Name)),
-			PathStyle.Render(target.Path),
-			MutedStyle.Render("(y/N):"))
+			PathStyle.Render(target.Path))
 
-		reader := bufio.NewReader(os.Stdin)
-		response, err := reader.ReadString('\n')
+		confirmed, err := picker.Confirm(question)
 		if err != nil {
-			return fmt.Errorf("failed to read confirmation: %w", err)
+			if errors.Is(err, picker.ErrConfirmationCancelled) {
+				cmd.Println(MutedStyle.Render("Aborted."))
+				return nil
+			}
+			return err
 		}
 
-		response = strings.TrimSpace(strings.ToLower(response))
-		if response != "y" && response != "yes" {
-			cmd.Println("Aborted.")
+		if !confirmed {
+			cmd.Println(MutedStyle.Render("Aborted."))
 			return nil
 		}
 
