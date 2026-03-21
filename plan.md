@@ -43,7 +43,6 @@ daycare/
 - Create `go.mod` with module name, Go version, and dependencies:
   - `github.com/spf13/cobra` - CLI framework
   - `github.com/charmbracelet/bubbletea` - TUI
-  - `github.com/charmbracelet/fuzzy` - Fuzzy search
   - `gopkg.in/yaml.v3` - Config parsing
 - Create `main.go` entry point
 

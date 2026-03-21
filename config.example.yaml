@@ -1,0 +1,5 @@
+# Daycare Configuration
+# Location: ~/.config/daycare/config.yaml
+
+# Directory where projects are stored
+projects_dir: ~/projects
