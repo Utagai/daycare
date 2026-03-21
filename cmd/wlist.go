@@ -27,7 +27,7 @@ var wlistCmd = &cobra.Command{
 
 		var p *models.Project
 		if len(args) == 0 {
-			return fmt.Errorf("project name required: use 'wlist [project-name]' or use 'wselect' to pick a project")
+			return fmt.Errorf("automatic project selection not implemented yet. Please specify a project name.")
 		}
 
 		p, err = project.GetProject(cfg, args[0])
