@@ -191,22 +191,25 @@ daycare/
 ---
 
 ## Phase 9: Testing
+All tests should be ran in a containerized environment if they require filesystem ($HOME or projects dir) or git operations to ensure consistency and isolation.
 
-### Step 9.1: Unit Tests
+### Step 9.1: Containerized Testing Environment
+- Create `Dockerfile` for test environment
+- Build container with Go, Git, and daycare binary
+
+### Step 9.2: Unit Tests
 - Test config loading
 - Test project listing/scanning
 - Test worktree operations (mock git commands)
 - Test picker logic
 
-### Step 9.2: Integration Tests
+### Step 9.3: Integration Tests
 - Create temp directories for test projects
 - Test full command execution
 - Test worktree lifecycle (create, list, remove)
 - Test picker integration with mock data
 
-### Step 9.3: E2E Tests (Containerized)
-- Create `Dockerfile` for test environment
-- Build container with Go, Git, and daycare binary
+### Step 9.4: E2E Tests (Containerized)
 - Test scenarios:
   1. Create project, verify `.daycare/` structure
   2. Create worktree, verify git worktree list output
