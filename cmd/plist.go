@@ -4,11 +4,37 @@ import (
 	"fmt"
 	"time"
 
+	"charm.land/lipgloss/v2"
 	"charm.land/lipgloss/v2/table"
 	"github.com/spf13/cobra"
 	"github.com/utagai/daycare/internal/config"
 	"github.com/utagai/daycare/internal/project"
 )
+
+var (
+	headerColor = lipgloss.Color("121")
+	borderColor = lipgloss.Color("77")
+	evenRowFg   = lipgloss.Color("245")
+	oddRowFg    = lipgloss.Color("250")
+)
+
+func tableStyles(row, col int) lipgloss.Style {
+	switch {
+	case row == table.HeaderRow:
+		return lipgloss.NewStyle().
+			Foreground(headerColor).
+			Bold(true).
+			Padding(0, 1)
+	case row%2 == 0:
+		return lipgloss.NewStyle().
+			Foreground(evenRowFg).
+			Padding(0, 1)
+	default:
+		return lipgloss.NewStyle().
+			Foreground(oddRowFg).
+			Padding(0, 1)
+	}
+}
 
 func timeAgo(t time.Time) string {
 	if t.IsZero() {
@@ -77,6 +103,9 @@ var plistCmd = &cobra.Command{
 		}
 
 		t := table.New().
+			Border(lipgloss.NormalBorder()).
+			BorderStyle(lipgloss.NewStyle().Foreground(borderColor)).
+			StyleFunc(tableStyles).
 			Headers("Name", "Path", "Last Commit")
 
 		if len(projects) == 0 {
