@@ -11,7 +11,12 @@ import (
 )
 
 func init() {
-	rootCmd.AddCommand(pcdCmd)
+	pcdCmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		if len(args) == 0 {
+			return projectNameCompletion(cmd, args, toComplete)
+		}
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	}
 }
 
 var pcdCmd = &cobra.Command{

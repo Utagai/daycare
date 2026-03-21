@@ -77,9 +77,7 @@ func timeAgo(t time.Time) string {
 	}
 }
 
-func init() {
-	rootCmd.AddCommand(plistCmd)
-}
+func init() {}
 
 var plistCmd = &cobra.Command{
 	Use:   "plist",

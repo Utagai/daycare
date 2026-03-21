@@ -15,7 +15,15 @@ import (
 )
 
 func init() {
-	rootCmd.AddCommand(wcreateCmd)
+	wcreateCmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		if len(args) == 0 {
+			return projectNameCompletion(cmd, args, toComplete)
+		}
+		if len(args) == 1 {
+			return worktreeNameCompletion(cmd, args, toComplete)
+		}
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	}
 }
 
 var wcreateCmd = &cobra.Command{
