@@ -8,33 +8,6 @@
 - Seamlessly `cd` into projects and worktrees with shell integration
 - Get tab completion for project and worktree names
 
-## Project Structure
-
-```
-agents-md/          # Root directory
-├── cmd/            # CLI commands (Cobra)
-│   ├── root.go     # Root command, version handling
-│   ├── plist.go    # List projects
-│   ├── pcreate.go  # Create project
-│   ├── pcd.go      # cd into project
-│   ├── wlist.go    # List worktrees
-│   ├── wcreate.go  # Create worktree
-│   ├── wcd.go      # cd into worktree
-│   ├── wremove.go  # Remove worktree
-│   ├── setup.go    # Shell integration
-│   ├── picker_helpers.go  # Picker helpers
-│   └── styles.go   # Terminal styling
-├── internal/       # Business logic
-│   ├── config/     # Configuration (YAML)
-│   ├── models/      # Data models
-│   ├── project/     # Project operations
-│   ├── worktree/    # Worktree operations
-│   └── picker/      # Interactive TUI picker
-├── e2e/            # End-to-end tests
-├── main.go         # Entry point
-└── Makefile        # Build automation
-```
-
 ## Tech Stack
 
 | Component | Technology |
@@ -48,9 +21,8 @@ agents-md/          # Root directory
 ## Commands
 
 ```bash
-# Build and run
+# Build
 make build          # Build binary
-make run ARGS="<command>"  # Run with args
 
 # Testing
 make test-unit      # Unit tests
@@ -101,14 +73,3 @@ type Worktree struct {
 
 - Config file: `~/.config/daycare/config.yaml`
 - Example: `config.example.yaml`
-
-## Key Files
-
-| File | Purpose |
-|------|---------|
-| `cmd/root.go` | Version, config initialization |
-| `internal/config/config.go` | Config loading |
-| `internal/models/models.go` | Project/Worktree structs |
-| `internal/project/project.go` | Project CRUD |
-| `internal/worktree/worktree.go` | Worktree operations |
-| `internal/picker/picker.go` | Fuzzy search TUI |
