@@ -60,7 +60,9 @@ it will be prompted. The main worktree cannot be removed.`,
 				return err
 			}
 
-			worktreeName := args[1]
+			
+      
+      := args[1]
 			worktrees, err := worktree.ListWorktrees(cfg, p)
 			if err != nil {
 				return err
@@ -84,7 +86,11 @@ it will be prompted. The main worktree cannot be removed.`,
 			return fmt.Errorf("too many arguments")
 		}
 
-		cmd.Printf("Remove worktree %q at %s? (y/N): ", target.Name, target.Path)
+		cmd.Printf("%s %s at %s? %s ",
+			WarningStyle.Render("Remove worktree"),
+			ProjectNameStyle.Render(fmt.Sprintf("%q", target.Name)),
+			PathStyle.Render(target.Path),
+			MutedStyle.Render("(y/N):"))
 
 		reader := bufio.NewReader(os.Stdin)
 		response, err := reader.ReadString('\n')
@@ -102,7 +108,11 @@ it will be prompted. The main worktree cannot be removed.`,
 			return err
 		}
 
-		cmd.Printf("Removed worktree %q from project %q.\n", target.Name, p.Name)
+		cmd.Printf("%s %s %s %s\n",
+			SuccessStyle.Render("Removed worktree"),
+			ProjectNameStyle.Render(fmt.Sprintf("%q", target.Name)),
+			MutedStyle.Render("from project"),
+			ProjectNameStyle.Render(fmt.Sprintf("%q", p.Name)))
 		return nil
 	},
 }
