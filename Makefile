@@ -3,9 +3,6 @@
 build:
 	go build .
 
-run:
-	go run . $(ARGS)
-
 build-docker:
 	docker build --no-cache -t daycare-test .
 
