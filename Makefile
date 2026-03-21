@@ -7,10 +7,10 @@ build-fast:
 	docker build -t daycare-test .
 
 test-e2e: build-docker
-	docker compose run --rm e2e-tests
+	docker run --rm -e CI=true daycare-test
 
 docker-shell: build-docker
-	docker compose run --rm e2e-tests bash
+	docker run -it --rm -e CI=true daycare-test bash
 
 docker-clean:
-	docker compose down -v --rmi local 2>/dev/null || true
+	docker rm -f daycare-test 2>/dev/null || true

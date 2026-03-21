@@ -25,7 +25,11 @@ RUN apk add --no-cache \
 
 COPY --from=builder /build/daycare /usr/local/bin/daycare
 
+COPY e2e/run.sh /e2e/run.sh
+
 RUN mkdir -p /root/projects && \
     mkdir -p /root/.config/daycare && \
     git config --global user.email "test@example.com" && \
     git config --global user.name "Test User"
+
+CMD ["bash", "/e2e/run.sh"]
