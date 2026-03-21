@@ -219,8 +219,18 @@ func TestSetup(t *testing.T) {
 		t.Fatalf("setup failed: %v", err)
 	}
 
-	if !containsString(out, "zsh") && !containsString(out, "bash") {
-		t.Errorf("setup output should mention shell setup instructions, got: %s", out)
+	expectedPatterns := []string{
+		"Daycare shell integration",
+		"daycare() {",
+		"pcd|wcd",
+		"command daycare",
+		`eval "$output"`,
+	}
+
+	for _, pattern := range expectedPatterns {
+		if !containsString(out, pattern) {
+			t.Errorf("setup output should contain %q, got: %s", pattern, out)
+		}
 	}
 }
 

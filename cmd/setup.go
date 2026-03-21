@@ -22,9 +22,7 @@ Add the output of this command to your ~/.zshrc:
 Then restart your shell or run 'source ~/.zshrc'.
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		setupScript := `#!/bin/zsh
-# Daycare shell integration - add to ~/.zshrc
-
+		setupScript := `# Daycare shell integration - add to ~/.zshrc
 daycare() {
   local prev=$1
   shift
