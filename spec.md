@@ -20,7 +20,7 @@ program are simplicity, efficiency and aesthetics.
     - Note, this project does NOT remove projects.
 - `cd` into projects and worktrees
 - Display project and worktree information (e.g., name, path, last modified)
-- Interactive fuzzy-search picker (using Charmbracelet Lip Gloss) for project/worktree selection when arguments are omitted
+- Interactive fuzzy-search picker (using Charmbracelet Bubble Tea) for project/worktree selection when arguments are omitted
 
 ### Data Handling
 This project does not persist any data beyond what the filesystem provides. It relies on the directory structure to determine projects and worktrees.
