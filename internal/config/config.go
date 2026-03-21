@@ -22,7 +22,7 @@ func Load() (*Config, error) {
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
 		// Return default config
 		return &Config{
-			ProjectsDir: filepath.Join(os.Getenv("HOME"), "projects"),
+			ProjectsDir: filepath.Join(os.Getenv("HOME"), "code"),
 		}, nil
 	}
 
