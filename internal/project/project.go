@@ -322,8 +322,13 @@ func createScript(path string) error {
 		return err
 	}
 	_, err = f.WriteString("#!/bin/sh\n")
-	f.Close()
-	return err
+	if err != nil {
+		return err
+	}
+	if err := f.Close(); err != nil {
+		return err
+	}
+	return nil
 }
 
 // addToGitExclude appends a pattern to .git/info/exclude.
@@ -353,7 +358,7 @@ func addToGitExclude(repoDir, pattern string) error {
 	if err != nil {
 		return err
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	_, err = fmt.Fprintf(f, "%s\n", pattern)
 	return err
