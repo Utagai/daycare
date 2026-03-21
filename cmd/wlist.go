@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/jedib0t/go-pretty/v6/table"
+	"charm.land/lipgloss/v2/table"
 	"github.com/spf13/cobra"
 	"github.com/utagai/daycare/internal/config"
 	"github.com/utagai/daycare/internal/models"
@@ -40,9 +40,8 @@ var wlistCmd = &cobra.Command{
 			return err
 		}
 
-		t := table.NewWriter()
-		t.AppendHeader(table.Row{"Name", "Branch", "Path"})
-		t.SetStyle(table.StyleDefault)
+		t := table.New().
+			Headers("Name", "Branch", "Path")
 
 		if len(worktrees) == 0 {
 			cmd.Println("No worktrees found.")
@@ -50,10 +49,10 @@ var wlistCmd = &cobra.Command{
 		}
 
 		for _, wt := range worktrees {
-			t.AppendRow(table.Row{wt.Name, wt.Branch, wt.Path})
+			t.Row(wt.Name, wt.Branch, wt.Path)
 		}
 
-		cmd.Println(t.Render())
+		cmd.Println(t.String())
 		return nil
 	},
 }

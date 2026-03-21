@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/jedib0t/go-pretty/v6/table"
+	"charm.land/lipgloss/v2/table"
 	"github.com/spf13/cobra"
 	"github.com/utagai/daycare/internal/config"
 	"github.com/utagai/daycare/internal/project"
@@ -76,9 +76,8 @@ var plistCmd = &cobra.Command{
 			}
 		}
 
-		t := table.NewWriter()
-		t.AppendHeader(table.Row{"Name", "Path", "Last Commit"})
-		t.SetStyle(table.StyleDefault)
+		t := table.New().
+			Headers("Name", "Path", "Last Commit")
 
 		if len(projects) == 0 {
 			cmd.Println("No projects found.")
@@ -86,10 +85,10 @@ var plistCmd = &cobra.Command{
 		}
 
 		for _, p := range projects {
-			t.AppendRow(table.Row{p.Name, p.Path, timeAgo(p.LastCommit)})
+			t.Row(p.Name, p.Path, timeAgo(p.LastCommit))
 		}
 
-		cmd.Println(t.Render())
+		cmd.Println(t.String())
 		return nil
 	},
 }
