@@ -264,5 +264,11 @@ func RemoveWorktree(cfg *config.Config, p *models.Project, name string) error {
 		return fmt.Errorf("git worktree remove failed: %w", err)
 	}
 
+	// Delete the branch
+	err = gitExecuter.Run(p.Path, "git", "branch", "-D", target.Branch)
+	if err != nil {
+		return fmt.Errorf("git branch delete failed: %w", err)
+	}
+
 	return nil
 }

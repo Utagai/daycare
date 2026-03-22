@@ -1,6 +1,7 @@
 package worktree
 
 import (
+	"fmt"
 	"os"
 	"testing"
 
@@ -364,6 +365,106 @@ branch refs/heads/feature1
 	err := RemoveWorktree(cfg, p, "feature1")
 	if err != nil {
 		t.Fatalf("RemoveWorktree() error = %v", err)
+	}
+}
+
+func TestRemoveWorktreeDeletesBranch(t *testing.T) {
+	mockGit := &mockGitExecuter{
+		output: []byte(`worktree /projects/myproject
+HEAD abc123def456
+branch refs/heads/main
+
+worktree /projects/myproject/worktrees/feature1
+HEAD def456ghi789
+branch refs/heads/feature1
+`),
+		outputErr: nil,
+		runError:  nil,
+	}
+
+	var runCalls [][]string
+	mockGitWrapper := &mockGitExecuterWrapper{
+		mockGit: mockGit,
+		onRun: func(dir string, name string, args ...string) error {
+			call := make([]string, 0, len(args)+1)
+			call = append(call, name)
+			call = append(call, args...)
+			runCalls = append(runCalls, call)
+			return mockGit.Run(dir, name, args...)
+		},
+	}
+
+	SetGitExecuter(mockGitWrapper)
+	defer ResetDeps()
+
+	cfg := &config.Config{
+		ProjectsDir: "/projects",
+	}
+	p := &models.Project{
+		Name: "myproject",
+		Path: "/projects/myproject",
+	}
+
+	err := RemoveWorktree(cfg, p, "feature1")
+	if err != nil {
+		t.Fatalf("RemoveWorktree() error = %v", err)
+	}
+
+	if len(runCalls) != 2 {
+		t.Fatalf("RemoveWorktree() should call git twice (worktree remove + branch delete), got %d calls", len(runCalls))
+	}
+
+	if runCalls[0][0] != "git" || runCalls[0][1] != "worktree" || runCalls[0][2] != "remove" {
+		t.Errorf("First call should be 'git worktree remove', got %v", runCalls[0])
+	}
+
+	if runCalls[1][0] != "git" || runCalls[1][1] != "branch" || runCalls[1][2] != "-D" {
+		t.Errorf("Second call should be 'git branch -D', got %v", runCalls[1])
+	}
+
+	if runCalls[1][3] != "feature1" {
+		t.Errorf("Branch delete should target 'feature1', got %v", runCalls[1][3])
+	}
+}
+
+func TestRemoveWorktreeBranchDeleteError(t *testing.T) {
+	mockGit := &mockGitExecuter{
+		output: []byte(`worktree /projects/myproject
+HEAD abc123def456
+branch refs/heads/main
+
+worktree /projects/myproject/worktrees/feature1
+HEAD def456ghi789
+branch refs/heads/feature1
+`),
+		outputErr: nil,
+		runError:  nil,
+	}
+
+	mockGitWrapper := &mockGitExecuterWrapper{
+		mockGit: mockGit,
+		onRun: func(dir string, name string, args ...string) error {
+			if name == "git" && args[0] == "branch" {
+				return fmt.Errorf("branch delete failed")
+			}
+			return mockGit.Run(dir, name, args...)
+		},
+	}
+
+	SetGitExecuter(mockGitWrapper)
+	defer ResetDeps()
+
+	cfg := &config.Config{
+		ProjectsDir: "/projects",
+	}
+	p := &models.Project{
+		Name: "myproject",
+		Path: "/projects/myproject",
+	}
+
+	err := RemoveWorktree(cfg, p, "feature1")
+	if err == nil {
+		t.Error("RemoveWorktree() should return error when branch delete fails")
 	}
 }
 
