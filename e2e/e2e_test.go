@@ -340,3 +340,33 @@ func TestWorktreeCreateDuplicate(t *testing.T) {
 		t.Errorf("wcreate should fail when creating duplicate worktree")
 	}
 }
+
+func TestWorktreeRemoveDeletesBranch(t *testing.T) {
+	runCmd(daycareBin, "pcreate", projectName)
+	runCmd(daycareBin, "wcreate", projectName, worktreeName)
+
+	out, err := runCmd(daycareBin, "wremove", projectName, worktreeName)
+	if err != nil {
+		t.Fatalf("wremove failed: %v, output: %s", err, out)
+	}
+
+	if !containsString(out, "Removed worktree") {
+		t.Errorf("wremove output should contain 'Removed worktree', got: %s", out)
+	}
+
+	worktreePath := filepath.Join(projectsDir, "worktrees", projectName, worktreeName)
+	if _, err := os.Stat(worktreePath); !os.IsNotExist(err) {
+		t.Errorf("worktree directory should be removed at %s", worktreePath)
+	}
+
+	projectPath := filepath.Join(projectsDir, projectName)
+	branchCheck := exec.Command("git", "-C", projectPath, "branch", "--list", worktreeName)
+	var branchOut bytes.Buffer
+	branchCheck.Stdout = &branchOut
+	if err := branchCheck.Run(); err != nil {
+		t.Fatalf("git branch check failed: %v", err)
+	}
+	if branchOut.String() != "" {
+		t.Errorf("branch %q should be deleted, but still exists", worktreeName)
+	}
+}
