@@ -17,18 +17,15 @@ func init() {
 		if len(args) == 0 {
 			return projectNameCompletion(cmd, args, toComplete)
 		}
-		if len(args) == 1 {
-			return worktreeNameCompletion(cmd, args, toComplete)
-		}
-		return nil, cobra.ShellCompDirectiveNoFileComp
+		return worktreeNameCompletion(cmd, args, toComplete)
 	}
 }
 
 var wremoveCmd = &cobra.Command{
 	Use:   "wremove [project-name] [worktree-name]",
 	Short: "Remove a worktree from a project",
-	Long: `Remove a worktree from a project. If project name is not provided, 
-it will be prompted. The main worktree cannot be removed.`,
+	Long: `Remove a worktree from a project. If only worktree name is provided, 
+a project will be prompted. The main worktree cannot be removed.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cfg, err := config.Load()
 		if err != nil {
@@ -51,15 +48,25 @@ it will be prompted. The main worktree cannot be removed.`,
 				return err
 			}
 		case 1:
-			// Project name provided, use picker for worktree
-			p, err = project.GetProject(cfg, args[0])
+			p, err = selectProject(cfg)
 			if err != nil {
 				return err
 			}
-			// Exclude main worktree from selection
-			target, err = selectWorktree(cfg, p, true)
+			worktrees, err := worktree.ListWorktrees(cfg, p)
 			if err != nil {
 				return err
+			}
+			for _, wt := range worktrees {
+				if wt.Name == args[0] {
+					target = wt
+					break
+				}
+			}
+			if target == nil {
+				return fmt.Errorf("worktree %q not found in project %q", args[0], p.Name)
+			}
+			if target.IsMain {
+				return fmt.Errorf("cannot remove the main worktree of project %q", p.Name)
 			}
 		case 2:
 			p, err = project.GetProject(cfg, args[0])
