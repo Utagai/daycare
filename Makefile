@@ -13,3 +13,6 @@ test-e2e: build-docker
 	docker run --rm daycare-test
 
 test: test-unit test-e2e
+
+install: build
+	sudo install daycare /usr/local/bin/

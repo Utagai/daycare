@@ -84,11 +84,11 @@ func (m confirmModel) View() string {
 
 	var yesLabel, noLabel string
 	if m.focus == 0 {
-		yesLabel = confirmStyles.yes.Render("▶ No ")
-		noLabel = "  Yes "
+		yesLabel = confirmStyles.yes.Render("▶ Yes")
+		noLabel = "  No  "
 	} else {
-		yesLabel = "  No  "
-		noLabel = confirmStyles.yes.Render("▶ Yes")
+		yesLabel = "  Yes "
+		noLabel = confirmStyles.no.Render("▶ No ")
 	}
 
 	b.WriteString(yesLabel)
