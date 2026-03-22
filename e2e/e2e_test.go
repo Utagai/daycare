@@ -53,16 +53,16 @@ func cleanupTestEnv() {
 	os.WriteFile(configPath, []byte(configContent), 0644)
 }
 
-func runCmd(name string, args ...string) (string, error) {
+func runCmd(name string, args ...string) (string, string, error) {
 	cmd := exec.Command(name, args...)
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	err := cmd.Run()
 	if err != nil {
-		return "", err
+		return stdout.String(), stderr.String(), err
 	}
-	return stdout.String(), nil
+	return stdout.String(), stderr.String(), nil
 }
 
 var ansiRegex = regexp.MustCompile(`\x1b\[[0-9;]*[a-zA-Z]`)
@@ -76,13 +76,13 @@ func containsString(s, substr string) bool {
 }
 
 func TestProjectCreate(t *testing.T) {
-	out, err := runCmd(daycareBin, "pcreate", projectName)
+	stdout, stderr, err := runCmd(daycareBin, "pcreate", projectName)
 	if err != nil {
-		t.Fatalf("pcreate failed: %v, stderr: %s", err, string(out))
+		t.Fatalf("pcreate failed: %v, stdout: %s, stderr: %s", err, stdout, stderr)
 	}
 
-	if !containsString(out, projectName) {
-		t.Errorf("pcreate output should contain project name %q, got: %s", projectName, out)
+	if !containsString(stdout, projectName) {
+		t.Errorf("pcreate output should contain project name %q, got: %s", projectName, stdout)
 	}
 
 	projectPath := filepath.Join(projectsDir, projectName)
@@ -114,44 +114,44 @@ func TestProjectCreate(t *testing.T) {
 func TestProjectList(t *testing.T) {
 	runCmd(daycareBin, "pcreate", projectName)
 
-	out, err := runCmd(daycareBin, "plist")
+	stdout, stderr, err := runCmd(daycareBin, "plist")
 	if err != nil {
-		t.Fatalf("plist failed: %v", err)
+		t.Fatalf("plist failed: %v, stdout: %s, stderr: %s", err, stdout, stderr)
 	}
 
-	if !containsString(out, projectName) {
-		t.Errorf("plist output should contain project name %q, got: %s", projectName, out)
+	if !containsString(stdout, projectName) {
+		t.Errorf("plist output should contain project name %q, got: %s", projectName, stdout)
 	}
 }
 
 func TestProjectCD(t *testing.T) {
 	runCmd(daycareBin, "pcreate", projectName)
 
-	out, err := runCmd(daycareBin, "pcd", projectName)
+	stdout, stderr, err := runCmd(daycareBin, "pcd", projectName)
 	if err != nil {
-		t.Fatalf("pcd failed: %v", err)
+		t.Fatalf("pcd failed: %v, stdout: %s, stderr: %s", err, stdout, stderr)
 	}
 
 	projectPath := filepath.Join(projectsDir, projectName)
-	if !containsString(out, projectPath) {
-		t.Errorf("pcd output should contain project path %q, got: %s", projectPath, out)
+	if !containsString(stdout, projectPath) {
+		t.Errorf("pcd output should contain project path %q, got: %s", projectPath, stdout)
 	}
 
-	if !containsString(out, "cd ") {
-		t.Errorf("pcd output should contain a cd command, got: %s", out)
+	if !containsString(stdout, "cd ") {
+		t.Errorf("pcd output should contain a cd command, got: %s", stdout)
 	}
 }
 
 func TestWorktreeCreate(t *testing.T) {
 	runCmd(daycareBin, "pcreate", projectName)
 
-	out, err := runCmd(daycareBin, "wcreate", projectName, worktreeName)
+	stdout, stderr, err := runCmd(daycareBin, "wcreate", projectName, worktreeName)
 	if err != nil {
-		t.Fatalf("wcreate failed: %v", err)
+		t.Fatalf("wcreate failed: %v, stdout: %s, stderr: %s", err, stdout, stderr)
 	}
 
-	if !containsString(out, worktreeName) {
-		t.Errorf("wcreate output should contain worktree name %q, got: %s", worktreeName, out)
+	if !containsString(stdout, worktreeName) {
+		t.Errorf("wcreate output should contain worktree name %q, got: %s", worktreeName, stdout)
 	}
 
 	worktreePath := filepath.Join(projectsDir, "worktrees", projectName, worktreeName)
@@ -169,17 +169,17 @@ func TestWorktreeList(t *testing.T) {
 	runCmd(daycareBin, "pcreate", projectName)
 	runCmd(daycareBin, "wcreate", projectName, worktreeName)
 
-	out, err := runCmd(daycareBin, "wlist", projectName)
+	stdout, stderr, err := runCmd(daycareBin, "wlist", projectName)
 	if err != nil {
-		t.Fatalf("wlist failed: %v", err)
+		t.Fatalf("wlist failed: %v, stdout: %s, stderr: %s", err, stdout, stderr)
 	}
 
-	if !containsString(out, projectName) {
-		t.Errorf("wlist output should contain project name %q, got: %s", projectName, out)
+	if !containsString(stdout, projectName) {
+		t.Errorf("wlist output should contain project name %q, got: %s", projectName, stdout)
 	}
 
-	if !containsString(out, worktreeName) {
-		t.Errorf("wlist output should contain worktree name %q, got: %s", worktreeName, out)
+	if !containsString(stdout, worktreeName) {
+		t.Errorf("wlist output should contain worktree name %q, got: %s", worktreeName, stdout)
 	}
 }
 
@@ -187,36 +187,36 @@ func TestWorktreeCD(t *testing.T) {
 	runCmd(daycareBin, "pcreate", projectName)
 	runCmd(daycareBin, "wcreate", projectName, worktreeName)
 
-	out, err := runCmd(daycareBin, "wcd", projectName, worktreeName)
+	stdout, stderr, err := runCmd(daycareBin, "wcd", projectName, worktreeName)
 	if err != nil {
-		t.Fatalf("wcd failed: %v", err)
+		t.Fatalf("wcd failed: %v, stdout: %s, stderr: %s", err, stdout, stderr)
 	}
 
 	worktreePath := filepath.Join(projectsDir, "worktrees", projectName, worktreeName)
-	if !containsString(out, worktreePath) {
-		t.Errorf("wcd output should contain worktree path %q, got: %s", worktreePath, out)
+	if !containsString(stdout, worktreePath) {
+		t.Errorf("wcd output should contain worktree path %q, got: %s", worktreePath, stdout)
 	}
 
-	if !containsString(out, "cd ") {
-		t.Errorf("wcd output should contain a cd command, got: %s", out)
+	if !containsString(stdout, "cd ") {
+		t.Errorf("wcd output should contain a cd command, got: %s", stdout)
 	}
 }
 
 func TestCompletionZsh(t *testing.T) {
-	out, err := runCmd(daycareBin, "completion", "zsh")
+	stdout, stderr, err := runCmd(daycareBin, "completion", "zsh")
 	if err != nil {
-		t.Fatalf("completion zsh failed: %v", err)
+		t.Fatalf("completion zsh failed: %v, stdout: %s, stderr: %s", err, stdout, stderr)
 	}
 
-	if !containsString(out, "#compdef daycare") {
-		t.Errorf("zsh completion should contain compdef directive, got: %s", out)
+	if !containsString(stdout, "#compdef daycare") {
+		t.Errorf("zsh completion should contain compdef directive, got: %s", stdout)
 	}
 }
 
 func TestSetup(t *testing.T) {
-	out, err := runCmd(daycareBin, "setup")
+	stdout, stderr, err := runCmd(daycareBin, "setup")
 	if err != nil {
-		t.Fatalf("setup failed: %v", err)
+		t.Fatalf("setup failed: %v, stdout: %s, stderr: %s", err, stdout, stderr)
 	}
 
 	expectedPatterns := []string{
@@ -228,8 +228,8 @@ func TestSetup(t *testing.T) {
 	}
 
 	for _, pattern := range expectedPatterns {
-		if !containsString(out, pattern) {
-			t.Errorf("setup output should contain %q, got: %s", pattern, out)
+		if !containsString(stdout, pattern) {
+			t.Errorf("setup output should contain %q, got: %s", pattern, stdout)
 		}
 	}
 }
@@ -237,7 +237,7 @@ func TestSetup(t *testing.T) {
 func TestProjectCreateDuplicate(t *testing.T) {
 	runCmd(daycareBin, "pcreate", projectName)
 
-	_, err := runCmd(daycareBin, "pcreate", projectName)
+	_, _, err := runCmd(daycareBin, "pcreate", projectName)
 	if err == nil {
 		t.Errorf("pcreate should fail when creating duplicate project")
 	}
@@ -265,11 +265,6 @@ func TestWcreateScriptExecution(t *testing.T) {
 }
 
 func TestWcreateScriptEnv(t *testing.T) {
-	// We set a bunch of env vars for the wcreate script:
-	//	- PROJECT_NAME
-	// 	- PROJECT_DIR
-	// 	- WORKTREE_PATH
-	// We want to test that these are actually set.
 	scriptTestProject := projectName + "-wcreate-env"
 	runCmd(daycareBin, "pcreate", scriptTestProject)
 
@@ -283,9 +278,9 @@ echo "WORKTREE_DIR=$WORKTREE_DIR"
 		t.Fatalf("failed to write wcreate script: %v", err)
 	}
 
-	out, err := runCmd(daycareBin, "wcreate", scriptTestProject, "test-branch")
+	stdout, stderr, err := runCmd(daycareBin, "wcreate", scriptTestProject, "test-branch")
 	if err != nil {
-		t.Fatalf("wcreate failed: %v", err)
+		t.Fatalf("wcreate failed: %v, stdout: %s, stderr: %s", err, stdout, stderr)
 	}
 
 	expectedVars := []string{
@@ -295,8 +290,8 @@ echo "WORKTREE_DIR=$WORKTREE_DIR"
 	}
 
 	for _, expected := range expectedVars {
-		if !containsString(out, expected) {
-			t.Errorf("wcreate script output should contain %q, got: %s", expected, out)
+		if !containsString(stdout, expected) {
+			t.Errorf("wcreate script output should contain %q, got: %s", expected, stdout)
 		}
 	}
 
@@ -318,14 +313,14 @@ echo "custom pwcd setup"
 
 	runCmd(daycareBin, "wcreate", scriptTestProject, "test-branch")
 
-	out, err := runCmd(daycareBin, "wcd", scriptTestProject, "test-branch")
+	stdout, stderr, err := runCmd(daycareBin, "wcd", scriptTestProject, "test-branch")
 	if err != nil {
-		t.Fatalf("wcd failed: %v", err)
+		t.Fatalf("wcd failed: %v, stdout: %s, stderr: %s", err, stdout, stderr)
 	}
 
 	expectedSource := fmt.Sprintf(". %q", pwcdScript)
-	if !containsString(out, expectedSource) {
-		t.Errorf("wcd output should contain the pwcd sourcing command %q, got: %s", expectedSource, out)
+	if !containsString(stdout, expectedSource) {
+		t.Errorf("wcd output should contain the pwcd sourcing command %q, got: %s", expectedSource, stdout)
 	}
 
 	os.RemoveAll(filepath.Join(projectsDir, scriptTestProject))
@@ -335,7 +330,7 @@ func TestWorktreeCreateDuplicate(t *testing.T) {
 	runCmd(daycareBin, "pcreate", projectName)
 	runCmd(daycareBin, "wcreate", projectName, worktreeName)
 
-	_, err := runCmd(daycareBin, "wcreate", projectName, worktreeName)
+	_, _, err := runCmd(daycareBin, "wcreate", projectName, worktreeName)
 	if err == nil {
 		t.Errorf("wcreate should fail when creating duplicate worktree")
 	}
@@ -345,9 +340,9 @@ func TestWorktreeRemoveDeletesBranch(t *testing.T) {
 	runCmd(daycareBin, "pcreate", projectName)
 	runCmd(daycareBin, "wcreate", projectName, worktreeName)
 
-	out, err := runCmd(daycareBin, "wremove", projectName, worktreeName)
+	out, stderr, err := runCmd(daycareBin, "wremove", projectName, worktreeName, "-y")
 	if err != nil {
-		t.Fatalf("wremove failed: %v, output: %s", err, out)
+		t.Fatalf("wremove failed: %v, stdout: %s, stderr: %s", err, out, stderr)
 	}
 
 	if !containsString(out, "Removed worktree") {
