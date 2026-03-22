@@ -22,3 +22,6 @@ docker-shell: build-docker
 
 docker-clean:
 	docker rm -f daycare-test 2>/dev/null || true
+
+install: build
+	sudo install daycare /usr/local/bin/
