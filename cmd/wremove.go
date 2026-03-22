@@ -13,6 +13,7 @@ import (
 )
 
 func init() {
+	wremoveCmd.Flags().BoolVarP(&skipConfirm, "yes", "y", false, "Skip confirmation prompt")
 	wremoveCmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
 			return projectNameCompletion(cmd, args, toComplete)
@@ -20,6 +21,8 @@ func init() {
 		return worktreeNameCompletion(cmd, args, toComplete)
 	}
 }
+
+var skipConfirm bool
 
 var wremoveCmd = &cobra.Command{
 	Use:   "wremove [project-name] [worktree-name]",
@@ -98,23 +101,25 @@ a project will be prompted. The main worktree cannot be removed.`,
 			return fmt.Errorf("too many arguments")
 		}
 
-		question := fmt.Sprintf("%s Remove worktree %s at %s?",
-			WarningStyle.Render("!"),
-			ProjectNameStyle.Render(fmt.Sprintf("%q", target.Name)),
-			PathStyle.Render(target.Path))
+		if !skipConfirm {
+			question := fmt.Sprintf("%s Remove worktree %s at %s?",
+				WarningStyle.Render("!"),
+				ProjectNameStyle.Render(fmt.Sprintf("%q", target.Name)),
+				PathStyle.Render(target.Path))
 
-		confirmed, err := picker.Confirm(question)
-		if err != nil {
-			if errors.Is(err, picker.ErrConfirmationCancelled) {
+			confirmed, err := picker.Confirm(question)
+			if err != nil {
+				if errors.Is(err, picker.ErrConfirmationCancelled) {
+					cmd.Println(MutedStyle.Render("Aborted."))
+					return nil
+				}
+				return err
+			}
+
+			if !confirmed {
 				cmd.Println(MutedStyle.Render("Aborted."))
 				return nil
 			}
-			return err
-		}
-
-		if !confirmed {
-			cmd.Println(MutedStyle.Render("Aborted."))
-			return nil
 		}
 
 		if err := worktree.RemoveWorktree(cfg, p, target.Name); err != nil {
