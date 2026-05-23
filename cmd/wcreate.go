@@ -67,7 +67,7 @@ If project name is not provided, it will be prompted.`,
 			ProjectNameStyle.Render(fmt.Sprintf("%q", wt.Name)),
 			MutedStyle.Render("for project"),
 			ProjectNameStyle.Render(fmt.Sprintf("%q", p.Name)))
-		return nil
+		return wcdCmd.RunE(cmd, []string{p.Name, wt.Name})
 	},
 }
 

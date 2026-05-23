@@ -35,6 +35,15 @@ daycare() {
         eval "$output"
       fi
       ;;
+    wcreate)
+      local output
+      local cd_cmd
+      output=$(command daycare "$prev" "$@")
+      cd_cmd=$(echo "$output" | grep '^cd ' || true)
+      if [ -n "$cd_cmd" ]; then
+        eval "$cd_cmd"
+      fi
+      ;;
     *)
       command daycare "$prev" "$@"
       ;;
