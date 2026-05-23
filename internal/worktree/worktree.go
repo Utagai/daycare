@@ -259,7 +259,7 @@ func RemoveWorktree(cfg *config.Config, p *models.Project, name string) error {
 	}
 
 	// git worktree remove <path>
-	err = gitExecuter.Run(p.Path, "git", "worktree", "remove", target.Path)
+	err = gitExecuter.Run(p.Path, "git", "worktree", "remove", "--force", target.Path)
 	if err != nil {
 		return fmt.Errorf("git worktree remove failed: %w", err)
 	}
