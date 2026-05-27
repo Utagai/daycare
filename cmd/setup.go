@@ -49,6 +49,8 @@ daycare() {
       ;;
   esac
 }
+
+source <(command daycare completion zsh)
 `
 		fmt.Println(setupScript)
 		return nil
