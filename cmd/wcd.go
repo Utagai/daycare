@@ -24,7 +24,8 @@ var wcdCmd = &cobra.Command{
 	Use:   "wcd [project-name] [worktree-name]",
 	Short: "Output shell script to cd into a worktree",
 	Long: `Output a shell script that cd's into the specified worktree.
-Designed to be used with eval: eval "$(daycare wcd)"`,
+Designed to be used with eval: eval "$(daycare wcd)"
+With one argument, it is treated as the project name and a worktree picker is shown.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cfg, err := config.Load()
 		if err != nil {
@@ -46,23 +47,14 @@ Designed to be used with eval: eval "$(daycare wcd)"`,
 				return err
 			}
 		case 1:
-			// Worktree name provided, use picker for project
-			p, err = selectProject(cfg)
+			// Project name provided, use picker for worktree
+			p, err = project.GetProject(cfg, args[0])
 			if err != nil {
 				return err
 			}
-			worktrees, err := worktree.ListWorktrees(cfg, p)
+			wt, err = selectWorktree(cfg, p, false)
 			if err != nil {
 				return err
-			}
-			for _, w := range worktrees {
-				if w.Name == args[0] {
-					wt = w
-					break
-				}
-			}
-			if wt == nil {
-				return fmt.Errorf("worktree %q not found in project %q", args[0], p.Name)
 			}
 		case 2:
 			p, err = project.GetProject(cfg, args[0])

@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 	"os/exec"
@@ -19,16 +20,16 @@ func init() {
 		if len(args) == 0 {
 			return projectNameCompletion(cmd, args, toComplete)
 		}
-		return worktreeNameCompletion(cmd, args, toComplete)
+		return nil, cobra.ShellCompDirectiveNoFileComp
 	}
 }
 
 var wcreateCmd = &cobra.Command{
-	Use:   "wcreate [project-name] <name>",
+	Use:   "wcreate [project-name] [name]",
 	Short: "Create a new worktree",
 	Long: `Create a new worktree for the specified project.
-If project name is not provided, it will be prompted.`,
-	Args: cobra.MinimumNArgs(1),
+If project name is not provided, it will be prompted.
+If worktree name is not provided, it will be prompted.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cfg, err := config.Load()
 		if err != nil {
@@ -38,19 +39,36 @@ If project name is not provided, it will be prompted.`,
 		var p *models.Project
 		var worktreeName string
 
-		if len(args) == 1 {
-			// Only worktree name provided, use picker for project
+		switch len(args) {
+		case 0:
 			p, err = selectProject(cfg)
 			if err != nil {
 				return err
 			}
-			worktreeName = args[0]
-		} else {
+		case 1:
+			p, err = project.GetProject(cfg, args[0])
+			if err != nil {
+				return err
+			}
+		default:
 			p, err = project.GetProject(cfg, args[0])
 			if err != nil {
 				return err
 			}
 			worktreeName = args[1]
+		}
+
+		if worktreeName == "" {
+			reader := bufio.NewReader(os.Stdin)
+			fmt.Print("Enter worktree name: ")
+			input, err := reader.ReadString('\n')
+			if err != nil {
+				return fmt.Errorf("failed to read input: %w", err)
+			}
+			worktreeName = strings.TrimSpace(input)
+			if worktreeName == "" {
+				return fmt.Errorf("worktree name cannot be empty")
+			}
 		}
 
 		wt, err := worktree.CreateWorktree(cfg, p, worktreeName)

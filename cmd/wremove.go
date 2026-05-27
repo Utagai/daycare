@@ -30,8 +30,8 @@ var skipConfirm bool
 var wremoveCmd = &cobra.Command{
 	Use:   "wremove [project-name] [worktree-name]",
 	Short: "Remove a worktree from a project",
-	Long: `Remove a worktree from a project. If only worktree name is provided, 
-a project will be prompted. The main worktree cannot be removed.`,
+	Long: `Remove a worktree from a project. If only a project name is provided, 
+a worktree picker will be shown. The main worktree cannot be removed.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cfg, err := config.Load()
 		if err != nil {
@@ -55,26 +55,13 @@ a project will be prompted. The main worktree cannot be removed.`,
 			}
 			targets = append(targets, target)
 		case 1:
-			p, err = selectProject(cfg)
+			p, err = project.GetProject(cfg, args[0])
 			if err != nil {
 				return err
 			}
-			worktrees, err := worktree.ListWorktrees(cfg, p)
+			target, err := selectWorktree(cfg, p, true)
 			if err != nil {
 				return err
-			}
-			var target *models.Worktree
-			for _, wt := range worktrees {
-				if wt.Name == args[0] {
-					target = wt
-					break
-				}
-			}
-			if target == nil {
-				return fmt.Errorf("worktree %q not found in project %q", args[0], p.Name)
-			}
-			if target.IsMain {
-				return fmt.Errorf("cannot remove the main worktree of project %q", p.Name)
 			}
 			targets = append(targets, target)
 		case 2:
